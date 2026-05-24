@@ -46,6 +46,11 @@ return [
             'provider' => 'users',
             'hash' => false,
         ],
+
+        'tuteur' => [
+            'driver' => 'sanctum',
+            'provider' => 'tuteurs',
+        ],
     ],
 
     /*
@@ -71,10 +76,10 @@ return [
             'model' => App\User::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'tuteurs' => [
+            'driver' => 'eloquent',
+            'model' => App\Tuteur::class,
+        ],
     ],
 
     /*

@@ -12,7 +12,6 @@ class VerifyCsrfToken extends Middleware
      * @var array
      */
     protected $except = [
-        //
-      //  'https://balsam.ma/admin/ajoutregion'
+        'api/*',
     ];
 }
