@@ -43,4 +43,40 @@ Route::group(['namespace' => 'Api'], function () {
 
     // Admin routes
     Route::get('/admin/tuteurs', 'PublicController@getAdminTuteurs');
+    Route::delete('/admin/tuteurs/{id}', 'AdminController@deleteTuteur');
+    Route::get('/admin/stats', 'AdminController@getStats');
+    
+    Route::get('/admin/activities', 'AdminController@getActivities');
+    Route::post('/admin/activities', 'AdminController@storeActivity');
+    Route::delete('/admin/activities/{id}', 'AdminController@deleteActivity');
+    
+    Route::get('/admin/news', 'AdminController@getNews');
+    Route::post('/admin/news', 'AdminController@storeNews');
+    Route::delete('/admin/news/{id}', 'AdminController@deleteNews');
+
+    Route::get('/admin/partners', 'AdminController@getPartners');
+    Route::post('/admin/partners', 'AdminController@storePartner');
+    Route::delete('/admin/partners/{id}', 'AdminController@deletePartner');
+
+    Route::get('/admin/regions', 'AdminController@getRegions');
+    Route::get('/admin/doctors', 'AdminController@getDoctors');
+    Route::get('/admin/types', 'AdminController@getTypes');
+
+    Route::get('/admin/sliders', 'AdminController@getSliders');
+    Route::post('/admin/sliders', 'AdminController@storeSlider');
+    Route::delete('/admin/sliders/{id}', 'AdminController@deleteSlider');
+
+    Route::get('/admin/gallery', 'AdminController@getGallery');
+    Route::post('/admin/gallery', 'AdminController@storeGallery');
+    Route::delete('/admin/gallery/{id}', 'AdminController@deleteGallery');
+
+    Route::get('/admin/static-pages', 'AdminController@getStaticPages');
+    Route::post('/admin/static-pages', 'AdminController@storeStaticPage');
+
+    // Sensitive routes restricted to President
+    Route::middleware('president')->group(function () {
+        Route::get('/admin/accounts', 'AdminController@getAdmins');
+        Route::post('/admin/accounts', 'AdminController@storeAdmin');
+        Route::delete('/admin/accounts/{id}', 'AdminController@deleteAdmin');
+    });
 });

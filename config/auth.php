@@ -51,6 +51,11 @@ return [
             'driver' => 'sanctum',
             'provider' => 'tuteurs',
         ],
+
+        'admin' => [
+            'driver' => 'sanctum',
+            'provider' => 'admins',
+        ],
     ],
 
     /*
@@ -79,6 +84,11 @@ return [
         'tuteurs' => [
             'driver' => 'eloquent',
             'model' => App\Tuteur::class,
+        ],
+
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => App\LoginAdmin::class,
         ],
     ],
 
