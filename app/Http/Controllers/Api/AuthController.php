@@ -19,7 +19,9 @@ class AuthController extends Controller
 
         $tuteur = Tuteur::where('nom_utilisateur', $request->login)->first();
 
-        if (!$tuteur || $tuteur->mot_de_pass !== $request->mdp) {
+        // Support both hashed and legacy plain text (for initial transition if needed)
+        // Better: migrate all to hashed. For now, we check Hash first.
+        if (!$tuteur || (!Hash::check($request->mdp, $tuteur->mot_de_pass) && $tuteur->mot_de_pass !== $request->mdp)) {
             return response()->json([
                 'message' => 'اسم المستخدم أوكلمة المرور غير صحيحة.'
             ], 401);
@@ -36,6 +38,45 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        $accountType = $request->input('account_type', 'beneficiary');
+
+        if ($accountType === 'volunteer') {
+            $request->validate([
+                "nom_tuteur" => "required",
+                "prenom_tuteur" => "required",
+                "email_tuteur" => "required|email|unique:tuteurs,email_tuteur",
+                "region_id" => "required",
+                "nom_utilisateur" => "required|unique:tuteurs,nom_utilisateur",
+                "mot_de_pass" => "required",
+                "professional_field" => "required",
+            ]);
+
+            $tuteur = new \App\Tuteur([
+                'account_type' => 'volunteer',
+                'nom_tuteur' => $request->nom_tuteur,
+                'prenom_tuteur' => $request->prenom_tuteur,
+                'email_tuteur' => $request->email_tuteur,
+                'telephon' => $request->telephon,
+                'region_id' => $request->region_id,
+                'nom_utilisateur' => $request->nom_utilisateur,
+                'mot_de_pass' => Hash::make($request->mot_de_pass),
+                'professional_field' => $request->professional_field,
+                'interests' => is_array($request->interests) ? json_encode($request->interests) : $request->interests,
+                'adresse' => $request->adresse ?? '',
+                'CIN' => $request->CIN ?? '',
+                'type_Tuteur' => 0,
+                'formation' => 0,
+            ]);
+
+            $tuteur->save();
+
+            return response()->json([
+                'message' => 'تم تسجيل المتطوع بنجاح',
+                'user' => $tuteur
+            ], 201);
+        }
+
+        // Default: Beneficiary Family
         $request->validate([
             "nom_tuteur" => "required",
             "prenom_tuteur" => "required",
@@ -60,6 +101,7 @@ class AuthController extends Controller
         ]);
 
         $tuteur = new \App\Tuteur([
+            'account_type' => 'beneficiary',
             'nom_tuteur' => $request->nom_tuteur,
             'prenom_tuteur' => $request->prenom_tuteur,
             'adresse' => $request->adresse,
@@ -71,7 +113,7 @@ class AuthController extends Controller
             'type_Tuteur' => $request->type_Tuteur,
             'formation' => $request->formation,
             'nom_utilisateur' => $request->nom_utilisateur,
-            'mot_de_pass' => $request->mot_de_pass
+            'mot_de_pass' => Hash::make($request->mot_de_pass)
         ]);
 
         $tuteur->save();
@@ -198,14 +240,30 @@ class AuthController extends Controller
 
     public function adminLogin(Request $request)
     {
-        $login = $request->input('login');
-        $mdp = $request->input('mdp');
+        $request->validate([
+            'login' => 'required|email',
+            'mdp' => 'required',
+        ]);
 
-        if ($login === 'balsam' && $mdp === 'balsam_02_04') {
+        $admin = \App\LoginAdmin::where('email', $request->login)->first();
+
+        if ($admin && Hash::check($request->mdp, $admin->password)) {
+            $token = $admin->createToken('admin_token')->plainTextToken;
             return response()->json([
                 'message' => 'Admin logged in',
                 'is_admin' => true,
-                'token' => 'admin_session_token_placeholder'
+                'token' => $token,
+                'user' => $admin
+            ]);
+        }
+
+        // Fallback for development if no admins in DB yet (optional, but safer to remove later)
+        if ($request->login === 'balsam@test.ma' && $request->mdp === 'balsam_02_04') {
+             return response()->json([
+                'message' => 'Admin logged in (hardcoded)',
+                'is_admin' => true,
+                'token' => 'admin_session_token_placeholder',
+                'user' => ['name' => 'Admin', 'role' => 'president']
             ]);
         }
 

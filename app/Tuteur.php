@@ -11,9 +11,9 @@ class Tuteur extends Authenticatable
     use HasApiTokens, Notifiable;
 
     protected $fillable = [
-        'nom_tuteur', 'prenom_tuteur', 'adresse','email_tuteur',
+        'account_type', 'nom_tuteur', 'prenom_tuteur', 'adresse','email_tuteur',
         'telephon', 'whatsapp', 'nom_utilisateur', 'mot_de_pass', 'type_Tuteur', 'CIN',
-        'region_id', 'formation'
+        'region_id', 'formation', 'professional_field', 'interests'
     ];
 
     protected $hidden = [
@@ -38,5 +38,5 @@ class Tuteur extends Authenticatable
     public function tuteurActivities()
     {
         return $this->hasMany(Tuteur_Activite::class);
-    } 
+    }
 }
