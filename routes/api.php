@@ -42,41 +42,60 @@ Route::group(['namespace' => 'Api'], function () {
     Route::get('/generer/{id_activite}/{id_tuteur}', 'PublicController@genererPDF');
 
     // Admin routes
-    Route::get('/admin/tuteurs', 'PublicController@getAdminTuteurs');
-    Route::delete('/admin/tuteurs/{id}', 'AdminController@deleteTuteur');
-    Route::get('/admin/stats', 'AdminController@getStats');
-    
-    Route::get('/admin/activities', 'AdminController@getActivities');
-    Route::post('/admin/activities', 'AdminController@storeActivity');
-    Route::delete('/admin/activities/{id}', 'AdminController@deleteActivity');
-    
-    Route::get('/admin/news', 'AdminController@getNews');
-    Route::post('/admin/news', 'AdminController@storeNews');
-    Route::delete('/admin/news/{id}', 'AdminController@deleteNews');
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/admin/tuteurs', 'PublicController@getAdminTuteurs');
+        Route::delete('/admin/tuteurs/{id}', 'AdminController@deleteTuteur');
+        Route::get('/admin/stats', 'AdminController@getStats');
+        
+        Route::get('/admin/activities', 'AdminController@getActivities');
+        Route::post('/admin/activities', 'AdminController@storeActivity');
+        Route::delete('/admin/activities/{id}', 'AdminController@deleteActivity');
+        
+        Route::get('/admin/news', 'AdminController@getNews');
+        Route::post('/admin/news', 'AdminController@storeNews');
+        Route::delete('/admin/news/{id}', 'AdminController@deleteNews');
 
-    Route::get('/admin/partners', 'AdminController@getPartners');
-    Route::post('/admin/partners', 'AdminController@storePartner');
-    Route::delete('/admin/partners/{id}', 'AdminController@deletePartner');
+        Route::get('/admin/partners', 'AdminController@getPartners');
+        Route::post('/admin/partners', 'AdminController@storePartner');
+        Route::delete('/admin/partners/{id}', 'AdminController@deletePartner');
 
-    Route::get('/admin/regions', 'AdminController@getRegions');
-    Route::get('/admin/doctors', 'AdminController@getDoctors');
-    Route::get('/admin/types', 'AdminController@getTypes');
+        Route::get('/admin/regions', 'AdminController@getRegions');
+        Route::get('/admin/doctors', 'AdminController@getDoctors');
+        Route::get('/admin/types', 'AdminController@getTypes');
 
-    Route::get('/admin/sliders', 'AdminController@getSliders');
-    Route::post('/admin/sliders', 'AdminController@storeSlider');
-    Route::delete('/admin/sliders/{id}', 'AdminController@deleteSlider');
+        Route::get('/admin/sliders', 'AdminController@getSliders');
+        Route::post('/admin/sliders', 'AdminController@storeSlider');
+        Route::delete('/admin/sliders/{id}', 'AdminController@deleteSlider');
 
-    Route::get('/admin/gallery', 'AdminController@getGallery');
-    Route::post('/admin/gallery', 'AdminController@storeGallery');
-    Route::delete('/admin/gallery/{id}', 'AdminController@deleteGallery');
+        Route::get('/admin/gallery', 'AdminController@getGallery');
+        Route::post('/admin/gallery', 'AdminController@storeGallery');
+        Route::delete('/admin/gallery/{id}', 'AdminController@deleteGallery');
 
-    Route::get('/admin/static-pages', 'AdminController@getStaticPages');
-    Route::post('/admin/static-pages', 'AdminController@storeStaticPage');
+        Route::get('/admin/static-pages', 'AdminController@getStaticPages');
+        Route::post('/admin/static-pages', 'AdminController@storeStaticPage');
 
-    // Sensitive routes restricted to President
-    Route::middleware('president')->group(function () {
-        Route::get('/admin/accounts', 'AdminController@getAdmins');
-        Route::post('/admin/accounts', 'AdminController@storeAdmin');
-        Route::delete('/admin/accounts/{id}', 'AdminController@deleteAdmin');
+        // Restricted routes based on roles
+        Route::middleware('role:president')->group(function () {
+            Route::get('/admin/accounts', 'AdminController@getAdmins');
+            Route::post('/admin/accounts', 'AdminController@storeAdmin');
+            Route::delete('/admin/accounts/{id}', 'AdminController@deleteAdmin');
+        });
+
+        Route::middleware('role:president,secretary')->group(function () {
+            Route::get('/admin/meetings', 'ReportController@getMeetings');
+            Route::post('/admin/meetings', 'ReportController@storeMeeting');
+            Route::delete('/admin/meetings/{id}', 'ReportController@deleteMeeting');
+        });
+
+        Route::middleware('role:president,treasurer')->group(function () {
+            Route::get('/admin/finance', 'ReportController@getFinance');
+            Route::post('/admin/finance', 'ReportController@storeTransaction');
+            Route::put('/admin/finance/{id}', 'ReportController@updateTransaction');
+            Route::delete('/admin/finance/{id}', 'ReportController@deleteTransaction');
+
+            Route::get('/admin/finance-categories', 'ReportController@getCategories');
+            Route::post('/admin/finance-categories', 'ReportController@storeCategory');
+            Route::delete('/admin/finance-categories/{id}', 'ReportController@deleteCategory');
+        });
     });
 });
