@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\StatsController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -79,4 +79,5 @@ Route::group(['namespace' => 'Api'], function () {
         Route::post('/admin/accounts', 'AdminController@storeAdmin');
         Route::delete('/admin/accounts/{id}', 'AdminController@deleteAdmin');
     });
+    Route::get('/stats', [StatsController::class, 'index']);
 });
