@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+
+
 use App\Http\Controllers\Controller;
+
 use Illuminate\Http\Request;
 use App\Activite;
 use App\TypeActivite;
@@ -16,6 +19,7 @@ use App\ImageExpo;
 use App\PageAutisme;
 use App\Aboutus;
 use App\Projet;
+
 
 class AdminController extends Controller
 {
