@@ -6,9 +6,37 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\MeetingReport;
 use App\FinanceTransaction;
+use App\ActivityReport;
 
 class ReportController extends Controller
 {
+    // Activity Reports
+    public function getActivities() {
+        return response()->json(ActivityReport::orderBy('date', 'desc')->get());
+    }
+
+    public function storeActivity(Request $request) {
+        $data = $request->validate([
+            'date' => 'required|date',
+            'location' => 'nullable',
+            'activity_type' => 'nullable',
+            'beneficiaries' => 'nullable',
+            'moderator' => 'nullable',
+            'presentation_title' => 'nullable',
+            'start_time' => 'nullable',
+            'end_time' => 'nullable',
+            'summary' => 'nullable',
+        ]);
+
+        $activity = ActivityReport::create($data);
+        return response()->json(['message' => 'Success', 'data' => $activity]);
+    }
+
+    public function deleteActivity($id) {
+        ActivityReport::findOrFail($id)->delete();
+        return response()->json(['message' => 'Deleted']);
+    }
+
     // Meeting Reports
     public function getMeetings() {
         return response()->json(MeetingReport::orderBy('date', 'desc')->get());

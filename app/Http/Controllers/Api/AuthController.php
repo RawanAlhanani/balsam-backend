@@ -40,28 +40,26 @@ class AuthController extends Controller
     {
         $accountType = $request->input('account_type', 'beneficiary');
 
-        if ($accountType === 'volunteer') {
+        if ($accountType === 'volunteer' || $accountType === 'admin_request') {
             $request->validate([
                 "nom_tuteur" => "required",
                 "prenom_tuteur" => "required",
                 "email_tuteur" => "required|email|unique:tuteurs,email_tuteur",
-                "region_id" => "required",
                 "nom_utilisateur" => "required|unique:tuteurs,nom_utilisateur",
                 "mot_de_pass" => "required",
-                "professional_field" => "required",
             ]);
 
             $tuteur = new \App\Tuteur([
-                'account_type' => 'volunteer',
+                'account_type' => $accountType,
                 'nom_tuteur' => $request->nom_tuteur,
                 'prenom_tuteur' => $request->prenom_tuteur,
                 'email_tuteur' => $request->email_tuteur,
                 'telephon' => $request->telephon,
-                'region_id' => $request->region_id,
+                'region_id' => $request->region_id ?? 1,
                 'nom_utilisateur' => $request->nom_utilisateur,
                 'mot_de_pass' => Hash::make($request->mot_de_pass),
-                'professional_field' => $request->professional_field,
-                'interests' => is_array($request->interests) ? json_encode($request->interests) : $request->interests,
+                'professional_field' => $request->professional_field ?? '',
+                'interests' => is_array($request->interests) ? json_encode($request->interests) : ($request->interests ?? ''),
                 'adresse' => $request->adresse ?? '',
                 'CIN' => $request->CIN ?? '',
                 'type_Tuteur' => 0,
@@ -70,8 +68,9 @@ class AuthController extends Controller
 
             $tuteur->save();
 
+            $msg = ($accountType === 'volunteer') ? 'تم تسجيل المتطوع بنجاح' : 'تم إرسال طلب حساب مسؤول بنجاح. سيتم تفعيله قريبا.';
             return response()->json([
-                'message' => 'تم تسجيل المتطوع بنجاح',
+                'message' => $msg,
                 'user' => $tuteur
             ], 201);
         }

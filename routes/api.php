@@ -82,6 +82,10 @@ Route::group(['namespace' => 'Api'], function () {
         });
 
         Route::middleware('role:president,secretary')->group(function () {
+            Route::get('/admin/activity-reports', 'ReportController@getActivities');
+            Route::post('/admin/activity-reports', 'ReportController@storeActivity');
+            Route::delete('/admin/activity-reports/{id}', 'ReportController@deleteActivity');
+
             Route::get('/admin/meetings', 'ReportController@getMeetings');
             Route::post('/admin/meetings', 'ReportController@storeMeeting');
             Route::delete('/admin/meetings/{id}', 'ReportController@deleteMeeting');
