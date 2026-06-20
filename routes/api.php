@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\StatsController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -55,25 +55,24 @@ Route::group(['namespace' => 'Api'], function () {
         Route::post('/admin/news', 'AdminController@storeNews');
         Route::delete('/admin/news/{id}', 'AdminController@deleteNews');
 
-        Route::get('/admin/partners', 'AdminController@getPartners');
-        Route::post('/admin/partners', 'AdminController@storePartner');
-        Route::delete('/admin/partners/{id}', 'AdminController@deletePartner');
+    Route::get('/admin/partners', 'AdminController@getPartners');
+    Route::post('/admin/partners', 'AdminController@storePartner');
+    Route::delete('/admin/partners/{id}', 'AdminController@deletePartner');
 
-        Route::get('/admin/regions', 'AdminController@getRegions');
-        Route::get('/admin/doctors', 'AdminController@getDoctors');
-        Route::get('/admin/types', 'AdminController@getTypes');
+    Route::get('/admin/regions', 'AdminController@getRegions');
+    Route::get('/admin/doctors', 'AdminController@getDoctors');
+    Route::get('/admin/types', 'AdminController@getTypes');
 
-        Route::get('/admin/sliders', 'AdminController@getSliders');
-        Route::post('/admin/sliders', 'AdminController@storeSlider');
-        Route::delete('/admin/sliders/{id}', 'AdminController@deleteSlider');
+    Route::get('/admin/sliders', 'AdminController@getSliders');
+    Route::post('/admin/sliders', 'AdminController@storeSlider');
+    Route::delete('/admin/sliders/{id}', 'AdminController@deleteSlider');
 
-        Route::get('/admin/gallery', 'AdminController@getGallery');
-        Route::post('/admin/gallery', 'AdminController@storeGallery');
-        Route::delete('/admin/gallery/{id}', 'AdminController@deleteGallery');
+    Route::get('/admin/gallery', 'AdminController@getGallery');
+    Route::post('/admin/gallery', 'AdminController@storeGallery');
+    Route::delete('/admin/gallery/{id}', 'AdminController@deleteGallery');
 
         Route::get('/admin/static-pages', 'AdminController@getStaticPages');
         Route::post('/admin/static-pages', 'AdminController@storeStaticPage');
-        Route::delete('/admin/static-pages/{type}/{id}', 'AdminController@deleteStaticPage');
 
         // Restricted routes based on roles
         Route::middleware('role:president')->group(function () {
@@ -83,10 +82,6 @@ Route::group(['namespace' => 'Api'], function () {
         });
 
         Route::middleware('role:president,secretary')->group(function () {
-            Route::get('/admin/activity-reports', 'ReportController@getActivities');
-            Route::post('/admin/activity-reports', 'ReportController@storeActivity');
-            Route::delete('/admin/activity-reports/{id}', 'ReportController@deleteActivity');
-
             Route::get('/admin/meetings', 'ReportController@getMeetings');
             Route::post('/admin/meetings', 'ReportController@storeMeeting');
             Route::delete('/admin/meetings/{id}', 'ReportController@deleteMeeting');
