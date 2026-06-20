@@ -102,13 +102,32 @@ class PublicController extends Controller
     public function getAutismePages()
     {
         $pages = PageAutisme::all();
-        return response()->json($pages);
+
+        // Return a compact representation including the structured description
+        $result = $pages->map(function($p) {
+            return [
+                'id' => $p->id,
+                'titre' => $p->titre,
+                'page_image' => $p->page_image,
+                'structured_description' => $p->structured_description,
+                'created_at' => $p->created_at,
+                'updated_at' => $p->updated_at,
+            ];
+        });
+
+        return response()->json($result);
     }
 
     public function getAutismePage($id)
     {
         $page = PageAutisme::find($id);
-        return response()->json($page);
+        if (!$page) return response()->json(null, 404);
+
+        // Return full page with structured description
+        $data = $page->toArray();
+        $data['structured_description'] = $page->structured_description;
+
+        return response()->json($data);
     }
 
     public function getRegistrationData()

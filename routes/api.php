@@ -46,11 +46,11 @@ Route::group(['namespace' => 'Api'], function () {
         Route::get('/admin/tuteurs', 'PublicController@getAdminTuteurs');
         Route::delete('/admin/tuteurs/{id}', 'AdminController@deleteTuteur');
         Route::get('/admin/stats', 'AdminController@getStats');
-        
+
         Route::get('/admin/activities', 'AdminController@getActivities');
         Route::post('/admin/activities', 'AdminController@storeActivity');
         Route::delete('/admin/activities/{id}', 'AdminController@deleteActivity');
-        
+
         Route::get('/admin/news', 'AdminController@getNews');
         Route::post('/admin/news', 'AdminController@storeNews');
         Route::delete('/admin/news/{id}', 'AdminController@deleteNews');
@@ -73,6 +73,7 @@ Route::group(['namespace' => 'Api'], function () {
 
         Route::get('/admin/static-pages', 'AdminController@getStaticPages');
         Route::post('/admin/static-pages', 'AdminController@storeStaticPage');
+        Route::delete('/admin/static-pages/{type}/{id}', 'AdminController@deleteStaticPage');
 
         // Restricted routes based on roles
         Route::middleware('role:president')->group(function () {

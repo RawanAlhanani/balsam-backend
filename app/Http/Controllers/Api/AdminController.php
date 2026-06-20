@@ -153,21 +153,68 @@ class AdminController extends Controller
 
     // Static Pages (About, Autism, Projects)
     public function getStaticPages() {
+        $abouts = Aboutus::all();
+        $autisms = PageAutisme::all();
+        $projects = Projet::all();
+
+        // Build unified items list with a `type` field for each item
+        $items = collect([]);
+        $abouts->each(function($p) use (&$items) { $items->push(array_merge($p->toArray(), ['type' => 'about'])); });
+        $autisms->each(function($p) use (&$items) { $items->push(array_merge($p->toArray(), ['type' => 'autism'])); });
+        $projects->each(function($p) use (&$items) { $items->push(array_merge($p->toArray(), ['type' => 'projects'])); });
+
         return response()->json([
-            'about' => Aboutus::all(),
-            'autism' => PageAutisme::all(),
-            'projects' => Projet::all(),
+            'about' => $abouts,
+            'autism' => $autisms,
+            'projects' => $projects,
+            'items' => $items,
         ]);
     }
 
     public function storeStaticPage(Request $request) {
-        $request->validate(["type" => "required", "titre" => "required", "description" => "required"]);
+        $request->validate(["type" => "required", "titre" => "required"]);
         $type = $request->type;
-        $data = $request->only(['titre', 'description']);
-        
-        if ($type === 'about') $page = new Aboutus($data);
-        elseif ($type === 'autism') $page = new PageAutisme($data);
-        else $page = new Projet($data);
+
+        // Prepare base data
+        $data = ['titre' => $request->titre];
+
+        // Handle description: either legacy string or structured JSON
+        if ($type === 'autism') {
+            // description_json may be passed as a JSON string
+            $descJson = $request->input('description_json');
+            if ($descJson) {
+                // Ensure it's valid JSON before saving
+                $decoded = json_decode($descJson, true);
+                $data['description_json'] = $decoded ?: null;
+                // Also set a fallback plain description (first section text)
+                if (is_array($decoded) && isset($decoded['sections'][0]['text'])) {
+                    $data['description'] = $decoded['sections'][0]['text'];
+                } else {
+                    $data['description'] = $request->input('description', '');
+                }
+            } else {
+                $data['description'] = $request->input('description', '');
+            }
+        } else {
+            $data['description'] = $request->input('description', '');
+        }
+
+        // If id provided, update existing page
+        if ($request->has('id')) {
+            $existingId = $request->id;
+            if ($type === 'about') $page = Aboutus::find($existingId);
+            elseif ($type === 'autism') $page = PageAutisme::find($existingId);
+            else $page = Projet::find($existingId);
+
+            if (!$page) {
+                return response()->json(['message' => 'Not found'], 404);
+            }
+            $page->titre = $data['titre'];
+        } else {
+            if ($type === 'about') $page = new Aboutus($data);
+            elseif ($type === 'autism') $page = new PageAutisme($data);
+            else $page = new Projet($data);
+        }
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -177,8 +224,28 @@ class AdminController extends Controller
             elseif ($type === 'about') $page->about_image = $name;
             elseif ($type === 'autism') $page->page_image = $name;
         }
+
+        // If description_json provided as array in $data, ensure saving as JSON in model
+        if (isset($data['description_json'])) {
+            $page->description_json = $data['description_json'];
+        }
+
+        $page->description = $data['description'] ?? '';
         $page->save();
         return response()->json(['message' => 'Success']);
+    }
+
+    public function deleteStaticPage($type, $id) {
+        if ($type === 'about') $page = Aboutus::find($id);
+        elseif ($type === 'autism') $page = PageAutisme::find($id);
+        else $page = Projet::find($id);
+
+        if (!$page) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        $page->delete();
+        return response()->json(['message' => 'Deleted']);
     }
 
     // Admin Accounts
