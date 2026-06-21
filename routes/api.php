@@ -34,6 +34,7 @@ Route::group(['namespace' => 'Api'], function () {
     Route::get('/news', 'PublicController@getNews');
     Route::get('/news/{id}', 'PublicController@getSingleNews');
     Route::get('/activities/{id}', 'PublicController@getActivity'); // Public single activity route
+    Route::get('/activities', 'PublicController@getActivities'); // Public activities route
     Route::get('/partenaires', 'PublicController@getPartenaires');
     Route::get('/photos', 'PublicController@getPhotos');
     Route::get('/autisme-pages', 'PublicController@getAutismePages');
