@@ -33,8 +33,7 @@ Route::group(['namespace' => 'Api'], function () {
     Route::get('/projects/{id}', 'PublicController@getProject');
     Route::get('/news', 'PublicController@getNews');
     Route::get('/news/{id}', 'PublicController@getSingleNews');
-    Route::get('/activities', 'PublicController@getActivities');
-    Route::get('/activities/{id}', 'PublicController@getActivity');
+    Route::get('/activities/{id}', 'PublicController@getActivity'); // Public single activity route
     Route::get('/partenaires', 'PublicController@getPartenaires');
     Route::get('/photos', 'PublicController@getPhotos');
     Route::get('/autisme-pages', 'PublicController@getAutismePages');
@@ -48,40 +47,48 @@ Route::group(['namespace' => 'Api'], function () {
         Route::delete('/admin/tuteurs/{id}', 'AdminController@deleteTuteur');
         Route::get('/admin/stats', 'AdminController@getStats');
 
-        Route::get('/admin/activities', 'AdminController@getActivities');
+        // Admin Activities routes
+        Route::get('/admin/activities', 'AdminController@getActivities'); // Added this line for admin GET
         Route::post('/admin/activities', 'AdminController@storeActivity');
-        Route::delete('/admin/activities/{id}', 'AdminController@deleteActivity');
-
-        Route::get('/admin/tuteurs', 'PublicController@getAdminTuteurs');
-        Route::delete('/admin/tuteurs/{id}', 'AdminController@deleteTuteur');
-        Route::get('/admin/stats', 'AdminController@getStats');
-
-        Route::get('/admin/activities', 'AdminController@getActivities');
-        Route::post('/admin/activities', 'AdminController@storeActivity');
+        Route::put('/admin/activities/{id}', 'AdminController@updateActivity');
         Route::delete('/admin/activities/{id}', 'AdminController@deleteActivity');
 
         Route::get('/admin/news', 'AdminController@getNews');
         Route::post('/admin/news', 'AdminController@storeNews');
+        Route::put('/admin/news/{id}', 'AdminController@updateNews');
         Route::delete('/admin/news/{id}', 'AdminController@deleteNews');
 
         Route::get('/admin/partners', 'AdminController@getPartners');
         Route::post('/admin/partners', 'AdminController@storePartner');
+        Route::put('/admin/partners/{id}', 'AdminController@updatePartner');
         Route::delete('/admin/partners/{id}', 'AdminController@deletePartner');
 
         Route::get('/admin/regions', 'AdminController@getRegions');
+        Route::post('/admin/regions', 'AdminController@storeRegion');
+        Route::put('/admin/regions/{id}', 'AdminController@updateRegion');
+        Route::delete('/admin/regions/{id}', 'AdminController@deleteRegion');
         Route::get('/admin/doctors', 'AdminController@getDoctors');
+        Route::post('/admin/doctors', 'AdminController@storeDoctor');
+        Route::put('/admin/doctors/{id}', 'AdminController@updateDoctor');
+        Route::delete('/admin/doctors/{id}', 'AdminController@deleteDoctor');
         Route::get('/admin/types', 'AdminController@getTypes');
+        Route::post('/admin/types', 'AdminController@storeType');
+        Route::put('/admin/types/{id}', 'AdminController@updateType');
+        Route::delete('/admin/types/{id}', 'AdminController@deleteType');
 
         Route::get('/admin/sliders', 'AdminController@getSliders');
         Route::post('/admin/sliders', 'AdminController@storeSlider');
+        Route::put('/admin/sliders/{id}', 'AdminController@updateSlider'); // Added this line
         Route::delete('/admin/sliders/{id}', 'AdminController@deleteSlider');
 
         Route::get('/admin/gallery', 'AdminController@getGallery');
         Route::post('/admin/gallery', 'AdminController@storeGallery');
+        Route::put('/admin/gallery/{id}', 'AdminController@updateGallery'); // Added this line
         Route::delete('/admin/gallery/{id}', 'AdminController@deleteGallery');
 
         Route::get('/admin/static-pages', 'AdminController@getStaticPages');
         Route::post('/admin/static-pages', 'AdminController@storeStaticPage');
+        Route::get('/admin/static-pages/{type}/{id}', 'AdminController@getSingleStaticPage');
         Route::delete('/admin/static-pages/{type}/{id}', 'AdminController@deleteStaticPage');
 
         // Restricted routes based on roles
@@ -94,6 +101,7 @@ Route::group(['namespace' => 'Api'], function () {
         Route::middleware('role:president,secretary')->group(function () {
             Route::get('/admin/activity-reports', 'ReportController@getActivities');
             Route::post('/admin/activity-reports', 'ReportController@storeActivity');
+            Route::put('/admin/activity-reports/{id}', 'ReportController@updateActivity');
             Route::delete('/admin/activity-reports/{id}', 'ReportController@deleteActivity');
 
             Route::get('/admin/meetings', 'ReportController@getMeetings');
@@ -109,6 +117,7 @@ Route::group(['namespace' => 'Api'], function () {
 
             Route::get('/admin/finance-categories', 'ReportController@getCategories');
             Route::post('/admin/finance-categories', 'ReportController@storeCategory');
+            Route::put('/admin/finance-categories/{id}', 'ReportController@updateCategory');
             Route::delete('/admin/finance-categories/{id}', 'ReportController@deleteCategory');
         });
     });
@@ -118,5 +127,3 @@ Route::group(['namespace' => 'Api'], function () {
     Route::get('/admin/volunteers', '\App\Http\Controllers\admin\VolunteerController@index');
     Route::delete('/admin/volunteers/{id}', '\App\Http\Controllers\admin\VolunteerController@destroy');
 });
-
-

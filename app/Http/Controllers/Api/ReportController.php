@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use App\MeetingReport;
 use App\FinanceTransaction;
 use App\ActivityReport;
+use App\FinanceCategory;
+use App\Tuteur;
+use App\Enfant;
+
 
 class ReportController extends Controller
 {
@@ -150,5 +154,27 @@ class ReportController extends Controller
     public function deleteCategory($id) {
         \App\FinanceCategory::findOrFail($id)->delete();
         return response()->json(['message' => 'Deleted']);
+    }
+
+
+    // ... other methods ...
+
+    public function updateCategory(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:income,expense',
+        ]);
+
+        try {
+            $category = FinanceCategory::findOrFail($id);
+            $category->name = $request->name;
+            $category->type = $request->type;
+            $category->save();
+
+            return response()->json(['message' => 'Category updated successfully.', 'category' => $category]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error updating category: ' . $e->getMessage()], 500);
+        }
     }
 }

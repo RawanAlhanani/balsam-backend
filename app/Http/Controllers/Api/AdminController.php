@@ -19,6 +19,7 @@ use App\ImageExpo;
 use App\PageAutisme;
 use App\Aboutus;
 use App\Projet;
+use App\Models\StaticPage;
 
 
 class AdminController extends Controller
@@ -27,9 +28,67 @@ class AdminController extends Controller
     public function getActivities() {
         return response()->json(Activite::with('typeactivite')->get());
     }
+public function updateActivity(Request $request, $id)
+    {
+        $request->validate([
+            "titre" => "required",
+            "type_activite_id" => "required",
+            "date_activite" => "required|date",
+            "description" => "required",
+            "image_activite" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048", // Optional for update
+        ]);
+
+        try {
+            $activite = Activite::findOrFail($id);
+
+            $activite->titre = $request->titre;
+            $activite->description = $request->description;
+            $activite->type_activite_id = $request->type_activite_id;
+            $activite->date_activite = $request->date_activite;
+
+            if ($request->hasFile('image_activite')) {
+                // Delete old image if exists
+                if ($activite->image_activite) {
+                    // Storage::delete('public/MesImages/' . $activite->image_activite); // Uncomment if you manage storage
+                }
+                $image = $request->file('image_activite');
+                $name = time() . '.' . $image->extension();
+                $image->storeAs('public/MesImages', $name);
+                $activite->image_activite = $name;
+            }
+            $activite->save();
+                    return response()->json(['message' => 'Activity updated successfully.', 'data' => $activite]);
+                } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                    return response()->json(['message' => 'Activity not found.'], 404);
+                } catch (\Exception $e) {
+                    return response()->json(['message' => 'Error updating activity: ' . $e->getMessage()], 500);
+                }
+            }
+
 
     public function getTypes() {
         return response()->json(TypeActivite::all());
+    }
+    public function getSingleStaticPage($type, $id) // Added $type parameter
+    {
+        try {
+            $page = null;
+            if ($type === 'about') {
+                $page = Aboutus::findOrFail($id);
+            } elseif ($type === 'autism') {
+                $page = PageAutisme::findOrFail($id);
+            } elseif ($type === 'projects') {
+                $page = Projet::findOrFail($id);
+            } else {
+                return response()->json(['message' => 'Invalid static page type.'], 400);
+            }
+
+            return response()->json($page);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Static page not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred: ' . $e->getMessage()], 500);
+        }
     }
 
     public function storeActivity(Request $request) {
@@ -80,6 +139,38 @@ class AdminController extends Controller
         $info->save();
         return response()->json(['message' => 'Success']);
     }
+ public function updateNews(Request $request, $id)
+    {
+        $request->validate([
+            "titre" => "required",
+            "description" => "required",
+            "image_info" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048", // Optional for update
+        ]);
+
+        try {
+            $info = Info::findOrFail($id);
+
+            $info->titre = $request->titre;
+            $info->description = $request->description;
+
+            if ($request->hasFile('image_info')) {
+                // Delete old image if exists
+                if ($info->image_info) {
+                    // Storage::delete('public/MesImages/' . $info->image_info); // Uncomment if you manage storage
+                }
+                $image = $request->file('image_info');
+                $name = time() . '.' . $image->extension();
+                $image->storeAs('public/MesImages', $name);
+                $info->image_info = $name;
+            }
+             $info->save();
+                    return response()->json(['message' => 'News updated successfully.', 'data' => $info]);
+                } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                    return response()->json(['message' => 'News not found.'], 404);
+                } catch (\Exception $e) {
+                    return response()->json(['message' => 'Error updating news: ' . $e->getMessage()], 500);
+                }
+            }
 
     public function deleteNews($id) {
         Info::find($id)->delete();
@@ -102,6 +193,37 @@ class AdminController extends Controller
         }
         $partner->save();
         return response()->json(['message' => 'Success']);
+    }
+  public function updatePartner(Request $request, $id)
+    {
+        $request->validate([
+            "nomPartenaire" => "required",
+            "imagePartenaire" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048", // Optional for update
+        ]);
+
+        try {
+            $partner = Partenaire::findOrFail($id);
+
+            $partner->nomPartenaire = $request->nomPartenaire;
+
+            if ($request->hasFile('imagePartenaire')) {
+                // Delete old image if exists
+                if ($partner->imagePartenaire) {
+                    // Storage::delete('public/MesImages/' . $partner->imagePartenaire); // Uncomment if you manage storage
+                }
+                $image = $request->file('imagePartenaire');
+                $name = time() . '.' . $image->extension();
+                $image->storeAs('public/MesImages', $name);
+                $partner->imagePartenaire = $name;
+            }
+
+            $partner->save();
+            return response()->json(['message' => 'Partner updated successfully.', 'data' => $partner]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Partner not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error updating partner: ' . $e->getMessage()], 500);
+        }
     }
 
     public function deletePartner($id) {
@@ -303,4 +425,147 @@ class AdminController extends Controller
             'partenaires_count' => Partenaire::count(),
         ]);
     }
+ // Activity Types
+    public function storeType(Request $request)
+    {
+        $request->validate([
+            'nomActivite' => 'required|string|max:255|unique:type_activites,nomActivite',
+        ]);
+
+        try {
+            $type = TypeActivite::create([
+                'nomActivite' => $request->nomActivite,
+            ]);
+            return response()->json(['message' => 'Activity type added successfully.', 'type' => $type], 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error adding activity type: ' . $e->getMessage()], 500);
+        }
+    }
+ public function updateType(Request $request, $id)
+    {
+        $request->validate([
+            'nomActivite' => 'required|string|max:255|unique:type_activites,nomActivite,' . $id,
+        ]);
+
+        try {
+            $type = TypeActivite::findOrFail($id);
+            $type->nomActivite = $request->nomActivite;
+            $type->save();
+            return response()->json(['message' => 'Activity type updated successfully.', 'type' => $type]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Activity type not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error updating activity type: ' . $e->getMessage()], 500);
+        }
+    }
+  public function deleteType($id)
+     {
+         try {
+             $type = TypeActivite::findOrFail($id);
+             $type->delete();
+             return response()->json(['message' => 'Activity type deleted successfully.']);
+         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+             return response()->json(['message' => 'Activity type not found.'], 404);
+         } catch (\Exception $e) {
+             return response()->json(['message' => 'Error deleting activity type: ' . $e->getMessage()], 500);
+         }
+     }
+
+    // Regions
+    public function storeRegion(Request $request)
+    {
+        $request->validate([
+            'nom_region' => 'required|string|max:255|unique:regions,nom_region',
+        ]);
+
+        try {
+            $region = Region::create([
+                'nom_region' => $request->nom_region,
+            ]);
+            return response()->json(['message' => 'Region added successfully.', 'region' => $region], 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error adding region: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function updateRegion(Request $request, $id)
+    {
+        $request->validate([
+            'nom_region' => 'required|string|max:255|unique:regions,nom_region,' . $id,
+        ]);
+
+        try {
+            $region = Region::findOrFail($id);
+            $region->nom_region = $request->nom_region;
+            $region->save();
+
+            return response()->json(['message' => 'Region updated successfully.', 'region' => $region]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Region not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error updating region: ' . $e->getMessage()], 500);
+        }
+    }
+public function deleteRegion($id)
+    {
+        try {
+            $region = Region::findOrFail($id);
+            $region->delete();
+            return response()->json(['message' => 'Region deleted successfully.']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Region not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error deleting region: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Doctors (Specialities)
+    public function storeDoctor(Request $request)
+    {
+        $request->validate([
+            'specialite' => 'required|string|max:255|unique:doctors,specialite',
+        ]);
+
+        try {
+            $doctor = Doctor::create([
+                'specialite' => $request->specialite,
+            ]);
+            return response()->json(['message' => 'Doctor speciality added successfully.', 'doctor' => $doctor], 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error adding doctor speciality: ' . $e->getMessage()], 500);
+        }
+    }
+ public function updateDoctor(Request $request, $id)
+    {
+        $request->validate([
+            'specialite' => 'required|string|max:255|unique:doctors,specialite,' . $id,
+        ]);
+
+        try {
+            $doctor = Doctor::findOrFail($id);
+            $doctor->specialite = $request->specialite;
+            $doctor->save();
+
+            return response()->json(['message' => 'Doctor speciality updated successfully.', 'doctor' => $doctor]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Doctor speciality not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error updating doctor speciality: ' . $e->getMessage()], 500);
+        }
+    }
+  public function deleteDoctor($id)
+    {
+        try {
+            $doctor = Doctor::findOrFail($id);
+            $doctor->delete();
+            return response()->json(['message' => 'Doctor speciality deleted successfully.']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Doctor speciality not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error deleting doctor speciality: ' . $e->getMessage()], 500);
+        }
+    }
+
+
+
 }
