@@ -20,12 +20,19 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::group(['namespace' => 'Api'], function () {
-    Route::post('/login', 'AuthController@login');
-    Route::post('/admin-login', 'AuthController@adminLogin');
-    Route::post('/register', 'AuthController@register');
+    Route::get('/csrf-cookie', function () {
+        return response()->json(['message' => 'CSRF cookie set']);
+    })->middleware('web');
+    
+    Route::middleware('throttle:20,1')->group(function () {
+        Route::post('/login', 'AuthController@login');
+        Route::post('/admin-login', 'AuthController@adminLogin');
+        Route::post('/register', 'AuthController@register');
+    });
     Route::post('/logout', 'AuthController@logout')->middleware('auth:sanctum');
     Route::get('/profile', 'AuthController@profile')->middleware('auth:sanctum');
     Route::post('/update-profile', 'AuthController@updateProfile')->middleware('auth:sanctum');
+    Route::post('/refresh', 'AuthController@refresh');
 
     Route::get('/home-data', 'PublicController@getHomeData');
     Route::get('/about', 'PublicController@getAbout');

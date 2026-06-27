@@ -26,6 +26,7 @@ class AdminSeeder extends Seeder
                 'email' => 'vice.president@balsam.ma',
                 'password' => Hash::make('vpresident123'),
                 'role' => 'vice_president',
+                
             ],
             [
                 'name' => 'الكاتب العام',
