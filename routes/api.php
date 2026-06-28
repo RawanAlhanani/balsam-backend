@@ -23,7 +23,7 @@ Route::group(['namespace' => 'Api'], function () {
     Route::get('/csrf-cookie', function () {
         return response()->json(['message' => 'CSRF cookie set']);
     })->middleware('web');
-    
+
     Route::middleware('throttle:20,1')->group(function () {
         Route::post('/login', 'AuthController@login');
         Route::post('/admin-login', 'AuthController@adminLogin');
@@ -60,11 +60,15 @@ Route::group(['namespace' => 'Api'], function () {
         Route::post('/admin/activities', 'AdminController@storeActivity');
         Route::put('/admin/activities/{id}', 'AdminController@updateActivity');
         Route::delete('/admin/activities/{id}', 'AdminController@deleteActivity');
+         Route::get('/admin/activities/{id}', 'AdminController@showActivity');
+            // For News
+
 
         Route::get('/admin/news', 'AdminController@getNews');
         Route::post('/admin/news', 'AdminController@storeNews');
         Route::put('/admin/news/{id}', 'AdminController@updateNews');
         Route::delete('/admin/news/{id}', 'AdminController@deleteNews');
+          Route::get('/admin/news/{id}', 'AdminController@showNews');
 
         Route::get('/admin/partners', 'AdminController@getPartners');
         Route::post('/admin/partners', 'AdminController@storePartner');
@@ -94,10 +98,14 @@ Route::group(['namespace' => 'Api'], function () {
         Route::put('/admin/gallery/{id}', 'AdminController@updateGallery'); // Added this line
         Route::delete('/admin/gallery/{id}', 'AdminController@deleteGallery');
 
+
         Route::get('/admin/static-pages', 'AdminController@getStaticPages');
         Route::post('/admin/static-pages', 'AdminController@storeStaticPage');
         Route::get('/admin/static-pages/{type}/{id}', 'AdminController@getSingleStaticPage');
         Route::delete('/admin/static-pages/{type}/{id}', 'AdminController@deleteStaticPage');
+
+        // ADDED: Route for Admin Stagiaires
+        Route::get('/admin/stagiaires', '\App\Http\Controllers\admin\StagiaireController@index');
 
         // Restricted routes based on roles
         Route::middleware('role:president')->group(function () {

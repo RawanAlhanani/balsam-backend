@@ -29,13 +29,24 @@ class AdminController extends Controller
     public function getActivities() {
         return response()->json(Activite::with('typeactivite')->get());
     }
+public function showActivity($id)
+{
+    try {
+        $activity = Activite::with('typeactivite')->findOrFail($id); // Eager load type if needed
+        return response()->json($activity);
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        return response()->json(['message' => 'Activity not found.'], 404);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'An error occurred: ' . $e->getMessage()], 500);
+    }
+}
 public function updateActivity(Request $request, $id)
     {
         try {
             $request->validate([
                 "titre" => "required|string|max:255",
                 "type_activite_id" => "required|exists:type_activites,id",
-                "date_activite" => "required|date|after:today",
+                "date_activite" => "required|date",
                 "description" => "required|string|min:10",
                 "image_activite" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
             ]);
@@ -180,6 +191,17 @@ public function updateActivity(Request $request, $id)
     // News (Infos)
     public function getNews() {
         return response()->json(Info::all());
+    }
+ public function showNews($id)
+    {
+        try {
+            $news = Info::findOrFail($id); // Assuming your News model is 'Info'
+            return response()->json($news);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'News item not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred: ' . $e->getMessage()], 500);
+        }
     }
 
     public function storeNews(Request $request) {
@@ -875,3 +897,4 @@ public function deleteRegion($id)
 
 
 }
+    // ... other methods ...
