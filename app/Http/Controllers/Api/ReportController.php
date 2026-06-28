@@ -184,7 +184,7 @@ class ReportController extends Controller
         try {
             $data = $request->validate([
                 'type' => 'required|in:income,expense',
-                'category' => 'required|exists:finance_categories,id',
+                'category' => 'required',
                 'amount' => 'required|numeric|min:0',
                 'date' => 'required|date|before_or_equal:today',
                 'description' => 'nullable|string|max:500',
@@ -218,7 +218,7 @@ class ReportController extends Controller
         try {
             $data = $request->validate([
                 'type' => 'required|in:income,expense',
-                'category' => 'required|exists:finance_categories,id',
+                'category' => 'required',
                 'amount' => 'required|numeric|min:0',
                 'date' => 'required|date|before_or_equal:today',
                 'description' => 'nullable|string|max:500',

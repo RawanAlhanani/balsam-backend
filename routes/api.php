@@ -101,6 +101,7 @@ Route::group(['namespace' => 'Api'], function () {
 
         Route::get('/admin/static-pages', 'AdminController@getStaticPages');
         Route::post('/admin/static-pages', 'AdminController@storeStaticPage');
+        Route::put('/admin/static-pages/{type}/{id}', 'AdminController@updateStaticPage');
         Route::get('/admin/static-pages/{type}/{id}', 'AdminController@getSingleStaticPage');
         Route::delete('/admin/static-pages/{type}/{id}', 'AdminController@deleteStaticPage');
 

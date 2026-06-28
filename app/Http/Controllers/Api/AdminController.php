@@ -35,9 +35,9 @@ public function showActivity($id)
         $activity = Activite::with('typeactivite')->findOrFail($id); // Eager load type if needed
         return response()->json($activity);
     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-        return response()->json(['message' => 'Activity not found.'], 404);
+        return response()->json(['message' => 'النشاط غير موجود.'], 404);
     } catch (\Exception $e) {
-        return response()->json(['message' => 'An error occurred: ' . $e->getMessage()], 500);
+        return response()->json(['message' => 'حدث خطأ ما: ' . $e->getMessage()], 500);
     }
 }
 public function updateActivity(Request $request, $id)
@@ -49,6 +49,17 @@ public function updateActivity(Request $request, $id)
                 "date_activite" => "required|date",
                 "description" => "required|string|min:10",
                 "image_activite" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
+            ], [
+                'titre.required' => 'عنوان النشاط مطلوب.',
+                'type_activite_id.required' => 'نوع النشاط مطلوب.',
+                'type_activite_id.exists' => 'نوع النشاط المختار غير صالح.',
+                'date_activite.required' => 'تاريخ النشاط مطلوب.',
+                'date_activite.date' => 'تنسيق التاريخ غير صحيح.',
+                'description.required' => 'وصف النشاط مطلوب.',
+                'description.min' => 'يجب أن يكون الوصف 10 أحرف على الأقل.',
+                'image_activite.image' => 'يجب أن يكون الملف صورة.',
+                'image_activite.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'image_activite.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
             ]);
 
             $activite = Activite::findOrFail($id);
@@ -75,20 +86,20 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => $request->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Activity updated successfully.', 'data' => $activite]);
+            return response()->json(['message' => 'تم تحديث النشاط بنجاح.', 'data' => $activite]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Activity not found for update', ['id' => $id]);
-            return response()->json(['message' => 'Activity not found.'], 404);
+            return response()->json(['message' => 'النشاط غير موجود.'], 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Activity update validation failed', ['errors' => $e->errors(), 'id' => $id]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error updating activity', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error updating activity.'], 500);
+            return response()->json(['message' => 'خطأ أثناء تحديث النشاط.'], 500);
         }
     }
 
@@ -107,14 +118,14 @@ public function updateActivity(Request $request, $id)
             } elseif ($type === 'projects') {
                 $page = Projet::findOrFail($id);
             } else {
-                return response()->json(['message' => 'Invalid static page type.'], 400);
+                return response()->json(['message' => 'نوع الصفحة الثابتة غير صالح.'], 400);
             }
 
             return response()->json($page);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Static page not found.'], 404);
+            return response()->json(['message' => 'الصفحة غير موجودة.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'An error occurred: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'حدث خطأ ما: ' . $e->getMessage()], 500);
         }
     }
 
@@ -126,6 +137,18 @@ public function updateActivity(Request $request, $id)
                 "date_activite" => "required|date|after:today",
                 "description" => "required|string|min:10",
                 "image_activite" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
+            ], [
+                'titre.required' => 'عنوان النشاط مطلوب.',
+                'type_activite_id.required' => 'نوع النشاط مطلوب.',
+                'type_activite_id.exists' => 'نوع النشاط المختار غير صالح.',
+                'date_activite.required' => 'تاريخ النشاط مطلوب.',
+                'date_activite.date' => 'تنسيق التاريخ غير صحيح.',
+                'date_activite.after' => 'يجب أن يكون تاريخ النشاط بعد اليوم.',
+                'description.required' => 'وصف النشاط مطلوب.',
+                'description.min' => 'يجب أن يكون الوصف 10 أحرف على الأقل.',
+                'image_activite.image' => 'يجب أن يكون الملف صورة.',
+                'image_activite.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'image_activite.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
             ]);
 
             $activite = new Activite([
@@ -150,16 +173,16 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => $request->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Success', 'data' => $activite]);
+            return response()->json(['message' => 'تم بنجاح', 'data' => $activite]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Activity creation validation failed', ['errors' => $e->errors()]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error creating activity', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error creating activity.'], 500);
+            return response()->json(['message' => 'خطأ أثناء إنشاء النشاط.'], 500);
         }
     }
 
@@ -174,17 +197,17 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Activity not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'Activity not found.'], 404);
+            return response()->json(['message' => 'النشاط غير موجود.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting activity', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting activity.'], 500);
+            return response()->json(['message' => 'خطأ أثناء حذف النشاط.'], 500);
         }
     }
 
@@ -198,9 +221,9 @@ public function updateActivity(Request $request, $id)
             $news = Info::findOrFail($id); // Assuming your News model is 'Info'
             return response()->json($news);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'News item not found.'], 404);
+            return response()->json(['message' => 'الخبر غير موجود.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'An error occurred: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'حدث خطأ ما: ' . $e->getMessage()], 500);
         }
     }
 
@@ -210,7 +233,15 @@ public function updateActivity(Request $request, $id)
                 "titre" => "required|string|max:255",
                 "description" => "required|string|min:10",
                 "image_info" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
+            ], [
+                'titre.required' => 'عنوان الخبر مطلوب.',
+                'description.required' => 'محتوى الخبر مطلوب.',
+                'description.min' => 'يجب أن يكون المحتوى 10 أحرف على الأقل.',
+                'image_info.image' => 'يجب أن يكون الملف صورة.',
+                'image_info.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'image_info.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
             ]);
+
             $info = new Info($request->all());
             if ($request->hasFile('image_info')) {
                 $image = $request->file('image_info');
@@ -226,16 +257,16 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Success']);
+            return response()->json(['message' => 'تم بنجاح']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('News creation validation failed', ['errors' => $e->errors()]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error creating news', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error creating news.'], 500);
+            return response()->json(['message' => 'خطأ أثناء إنشاء الخبر.'], 500);
         }
     }
  public function updateNews(Request $request, $id)
@@ -245,6 +276,13 @@ public function updateActivity(Request $request, $id)
                 "titre" => "required|string|max:255",
                 "description" => "required|string|min:10",
                 "image_info" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
+            ], [
+                'titre.required' => 'عنوان الخبر مطلوب.',
+                'description.required' => 'محتوى الخبر مطلوب.',
+                'description.min' => 'يجب أن يكون المحتوى 10 أحرف على الأقل.',
+                'image_info.image' => 'يجب أن يكون الملف صورة.',
+                'image_info.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'image_info.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
             ]);
 
             $info = Info::findOrFail($id);
@@ -269,20 +307,20 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'News updated successfully.', 'data' => $info]);
+            return response()->json(['message' => 'تم تحديث الخبر بنجاح.', 'data' => $info]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('News not found for update', ['id' => $id]);
-            return response()->json(['message' => 'News not found.'], 404);
+            return response()->json(['message' => 'الخبر غير موجود.'], 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('News update validation failed', ['errors' => $e->errors(), 'id' => $id]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error updating news', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error updating news.'], 500);
+            return response()->json(['message' => 'خطأ أثناء تحديث الخبر.'], 500);
         }
     }
 
@@ -297,17 +335,17 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('News not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'News not found.'], 404);
+            return response()->json(['message' => 'الخبر غير موجود.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting news', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting news.'], 500);
+            return response()->json(['message' => 'خطأ أثناء حذف الخبر.'], 500);
         }
     }
 
@@ -321,6 +359,12 @@ public function updateActivity(Request $request, $id)
             $request->validate([
                 "nomPartenaire" => "required|string|max:255",
                 "imagePartenaire" => "required|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
+            ], [
+                'nomPartenaire.required' => 'اسم الشريك مطلوب.',
+                'imagePartenaire.required' => 'صورة الشريك مطلوبة.',
+                'imagePartenaire.image' => 'يجب أن يكون الملف صورة.',
+                'imagePartenaire.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'imagePartenaire.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
             ]);
             $partner = new Partenaire(['nomPartenaire' => $request->nomPartenaire]);
             if ($request->hasFile('imagePartenaire')) {
@@ -337,16 +381,16 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Success']);
+            return response()->json(['message' => 'تم بنجاح']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Partner creation validation failed', ['errors' => $e->errors()]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error creating partner', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error creating partner.'], 500);
+            return response()->json(['message' => 'خطأ أثناء إنشاء الشريك.'], 500);
         }
     }
   public function updatePartner(Request $request, $id)
@@ -355,6 +399,11 @@ public function updateActivity(Request $request, $id)
             $request->validate([
                 "nomPartenaire" => "required|string|max:255",
                 "imagePartenaire" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
+            ], [
+                'nomPartenaire.required' => 'اسم الشريك مطلوب.',
+                'imagePartenaire.image' => 'يجب أن يكون الملف صورة.',
+                'imagePartenaire.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'imagePartenaire.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
             ]);
 
             $partner = Partenaire::findOrFail($id);
@@ -379,20 +428,20 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Partner updated successfully.', 'data' => $partner]);
+            return response()->json(['message' => 'تم تحديث الشريك بنجاح.', 'data' => $partner]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Partner not found for update', ['id' => $id]);
-            return response()->json(['message' => 'Partner not found.'], 404);
+            return response()->json(['message' => 'الشريك غير موجود.'], 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Partner update validation failed', ['errors' => $e->errors(), 'id' => $id]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error updating partner', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error updating partner.'], 500);
+            return response()->json(['message' => 'خطأ أثناء تحديث الشريك.'], 500);
         }
     }
 
@@ -407,17 +456,17 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Partner not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'Partner not found.'], 404);
+            return response()->json(['message' => 'الشريك غير موجود.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting partner', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting partner.'], 500);
+            return response()->json(['message' => 'خطأ أثناء حذف الشريك.'], 500);
         }
     }
 
@@ -430,6 +479,11 @@ public function updateActivity(Request $request, $id)
         try {
             $request->validate([
                 "image" => "required|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
+            ], [
+                'image.required' => 'الصورة مطلوبة.',
+                'image.image' => 'يجب أن يكون الملف صورة.',
+                'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
             ]);
             $slider = new ImagesPrincipales();
             if ($request->hasFile('image')) {
@@ -445,16 +499,16 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Success']);
+            return response()->json(['message' => 'تم بنجاح']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Slider creation validation failed', ['errors' => $e->errors()]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error creating slider', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error creating slider.'], 500);
+            return response()->json(['message' => 'خطأ أثناء إنشاء الصورة المتحركة.'], 500);
         }
     }
 
@@ -468,17 +522,17 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Slider not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'Slider not found.'], 404);
+            return response()->json(['message' => 'الصورة غير موجودة.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting slider', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting slider.'], 500);
+            return response()->json(['message' => 'خطأ أثناء حذف الصورة.'], 500);
         }
     }
 
@@ -491,6 +545,11 @@ public function updateActivity(Request $request, $id)
         try {
             $request->validate([
                 "image" => "required|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
+            ], [
+                'image.required' => 'الصورة مطلوبة.',
+                'image.image' => 'يجب أن يكون الملف صورة.',
+                'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
             ]);
             $expo = new ImageExpo();
             if ($request->hasFile('image')) {
@@ -506,16 +565,16 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Success']);
+            return response()->json(['message' => 'تم بنجاح']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Gallery creation validation failed', ['errors' => $e->errors()]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error creating gallery image', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error creating gallery image.'], 500);
+            return response()->json(['message' => 'خطأ أثناء إنشاء صورة المعرض.'], 500);
         }
     }
 
@@ -529,17 +588,17 @@ public function updateActivity(Request $request, $id)
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Gallery image not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'Gallery image not found.'], 404);
+            return response()->json(['message' => 'صورة المعرض غير موجودة.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting gallery image', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting gallery image.'], 500);
+            return response()->json(['message' => 'خطأ أثناء حذف صورة المعرض.'], 500);
         }
     }
 
@@ -569,7 +628,15 @@ public function updateActivity(Request $request, $id)
             "titre" => "required|string|max:255",
             "description" => "nullable|string|min:10",
             "image" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
+        ], [
+            'type.required' => 'نوع الصفحة مطلوب.',
+            'titre.required' => 'العنوان مطلوب.',
+            'description.min' => 'يجب أن يكون الوصف 10 أحرف على الأقل.',
+            'image.image' => 'يجب أن يكون الملف صورة.',
+            'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+            'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
         ]);
+
         $type = $request->type;
 
         // Prepare base data
@@ -604,7 +671,7 @@ public function updateActivity(Request $request, $id)
             else $page = Projet::find($existingId);
 
             if (!$page) {
-                return response()->json(['message' => 'Not found'], 404);
+                return response()->json(['message' => 'غير موجود'], 404);
             }
             $page->titre = $data['titre'];
         } else {
@@ -629,8 +696,72 @@ public function updateActivity(Request $request, $id)
 
         $page->description = $data['description'] ?? '';
         $page->save();
-        return response()->json(['message' => 'Success']);
+        return response()->json(['message' => 'تم بنجاح']);
     }
+
+    // ... existing methods ...
+
+    public function updateStaticPage(Request $request, $type, $id)
+    {
+        $request->validate([
+            "type" => "required|in:about,autism,projects",
+            "titre" => "required|string|max:255",
+            "description" => "nullable|string",
+            "description_json" => "nullable|json",
+            "image" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
+        ], [
+            'type.required' => 'نوع الصفحة مطلوب.',
+            'titre.required' => 'العنوان مطلوب.',
+            'image.image' => 'يجب أن يكون الملف صورة.',
+            'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+            'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
+        ]);
+
+        $page = null;
+        if ($type === 'about') $page = \App\Aboutus::findOrFail($id);
+        elseif ($type === 'autism') $page = \App\PageAutisme::findOrFail($id);
+        elseif ($type === 'projects') $page = \App\Projet::findOrFail($id);
+        else return response()->json(['message' => 'Invalid static page type.'], 400);
+
+        $page->titre = $request->titre;
+
+        // Handle structured description
+        $descJson = $request->input('description_json');
+        if ($descJson) {
+            $decoded = json_decode($descJson, true);
+            $page->structured_description = $decoded ?: null;
+            $page->description = null; // Clear old description
+        } else {
+            $page->description = $request->input('description', '');
+            $page->structured_description = null; // Clear structured description
+        }
+
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            $oldImage = null;
+            if ($type === 'projects') $oldImage = $page->projet_image;
+            elseif ($type === 'about') $oldImage = $page->about_image;
+            elseif ($type === 'autism') $oldImage = $page->page_image;
+
+            if ($oldImage) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete('MesImages/' . $oldImage);
+            }
+
+            $image = $request->file('image');
+            $name = time() . '.' . $image->extension();
+            $image->storeAs('public/MesImages', $name);
+            if ($type === 'projects') $page->projet_image = $name;
+            elseif ($type === 'about') $page->about_image = $name;
+            elseif ($type === 'autism') $page->page_image = $name;
+        }
+
+        $page->save();
+
+        return response()->json(['message' => 'Static page updated successfully.', 'page' => $page], 200);
+    }
+
+    // ... existing storeStaticPage method (should be for POST only) ...
+
 
     public function deleteStaticPage($type, $id) {
         if ($type === 'about') $page = Aboutus::find($id);
@@ -638,11 +769,11 @@ public function updateActivity(Request $request, $id)
         else $page = Projet::find($id);
 
         if (!$page) {
-            return response()->json(['message' => 'Not found'], 404);
+            return response()->json(['message' => 'غير موجود'], 404);
         }
 
         $page->delete();
-        return response()->json(['message' => 'Deleted']);
+        return response()->json(['message' => 'تم الحذف']);
     }
 
     // Admin Accounts
@@ -657,6 +788,13 @@ public function updateActivity(Request $request, $id)
                 "email" => "required|email|unique:login_admins,email|max:150",
                 "password" => "required|string|min:6|max:100",
                 "role" => "required|in:president,vice_president,secretary,vice_secretary,treasurer,vice_treasurer"
+            ], [
+                'name.required' => 'الاسم مطلوب.',
+                'email.required' => 'البريد الإلكتروني مطلوب.',
+                'email.unique' => 'هذا البريد الإلكتروني مستخدم بالفعل.',
+                'password.required' => 'كلمة المرور مطلوبة.',
+                'password.min' => 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.',
+                'role.required' => 'الدور مطلوب.',
             ]);
             $admin = new \App\LoginAdmin($request->all());
             $admin->password = \Hash::make($request->password);
@@ -669,16 +807,16 @@ public function updateActivity(Request $request, $id)
                 'created_by' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Success']);
+            return response()->json(['message' => 'تم بنجاح']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Admin creation validation failed', ['errors' => $e->errors()]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error creating admin account', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error creating admin account.'], 500);
+            return response()->json(['message' => 'خطأ أثناء إنشاء حساب المسؤول.'], 500);
         }
     }
 
@@ -694,17 +832,17 @@ public function updateActivity(Request $request, $id)
                 'deleted_by' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Admin not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'Admin not found.'], 404);
+            return response()->json(['message' => 'المسؤول غير موجود.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting admin account', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting admin account.'], 500);
+            return response()->json(['message' => 'خطأ أثناء حذف حساب المسؤول.'], 500);
         }
     }
 
@@ -720,17 +858,17 @@ public function updateActivity(Request $request, $id)
                 'deleted_by' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Tuteur not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'Tuteur not found.'], 404);
+            return response()->json(['message' => 'ولي الأمر غير موجود.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting tuteur account', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting tuteur account.'], 500);
+            return response()->json(['message' => 'خطأ أثناء حذف حساب ولي الأمر.'], 500);
         }
     }
 
@@ -758,32 +896,38 @@ public function updateActivity(Request $request, $id)
     {
         $request->validate([
             'nomActivite' => 'required|string|max:255|unique:type_activites,nomActivite',
+        ], [
+            'nomActivite.required' => 'اسم نوع النشاط مطلوب.',
+            'nomActivite.unique' => 'هذا النوع موجود بالفعل.',
         ]);
 
         try {
             $type = TypeActivite::create([
                 'nomActivite' => $request->nomActivite,
             ]);
-            return response()->json(['message' => 'Activity type added successfully.', 'type' => $type], 201);
+            return response()->json(['message' => 'تم إضافة نوع النشاط بنجاح.', 'type' => $type], 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error adding activity type: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'خطأ أثناء إضافة نوع النشاط: ' . $e->getMessage()], 500);
         }
     }
  public function updateType(Request $request, $id)
     {
         $request->validate([
             'nomActivite' => 'required|string|max:255|unique:type_activites,nomActivite,' . $id,
+        ], [
+            'nomActivite.required' => 'اسم نوع النشاط مطلوب.',
+            'nomActivite.unique' => 'هذا النوع موجود بالفعل.',
         ]);
 
         try {
             $type = TypeActivite::findOrFail($id);
             $type->nomActivite = $request->nomActivite;
             $type->save();
-            return response()->json(['message' => 'Activity type updated successfully.', 'type' => $type]);
+            return response()->json(['message' => 'تم تحديث نوع النشاط بنجاح.', 'type' => $type]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Activity type not found.'], 404);
+            return response()->json(['message' => 'نوع النشاط غير موجود.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error updating activity type: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'خطأ أثناء تحديث نوع النشاط: ' . $e->getMessage()], 500);
         }
     }
   public function deleteType($id)
@@ -791,11 +935,11 @@ public function updateActivity(Request $request, $id)
          try {
              $type = TypeActivite::findOrFail($id);
              $type->delete();
-             return response()->json(['message' => 'Activity type deleted successfully.']);
+             return response()->json(['message' => 'تم حذف نوع النشاط بنجاح.']);
          } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-             return response()->json(['message' => 'Activity type not found.'], 404);
+             return response()->json(['message' => 'نوع النشاط غير موجود.'], 404);
          } catch (\Exception $e) {
-             return response()->json(['message' => 'Error deleting activity type: ' . $e->getMessage()], 500);
+             return response()->json(['message' => 'خطأ أثناء حذف نوع النشاط: ' . $e->getMessage()], 500);
          }
      }
 
@@ -804,15 +948,18 @@ public function updateActivity(Request $request, $id)
     {
         $request->validate([
             'nom_region' => 'required|string|max:255|unique:regions,nom_region',
+        ], [
+            'nom_region.required' => 'اسم المنطقة مطلوب.',
+            'nom_region.unique' => 'هذه المنطقة موجودة بالفعل.',
         ]);
 
         try {
             $region = Region::create([
                 'nom_region' => $request->nom_region,
             ]);
-            return response()->json(['message' => 'Region added successfully.', 'region' => $region], 201);
+            return response()->json(['message' => 'تم إضافة المنطقة بنجاح.', 'region' => $region], 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error adding region: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'خطأ أثناء إضافة المنطقة: ' . $e->getMessage()], 500);
         }
     }
 
@@ -820,6 +967,9 @@ public function updateActivity(Request $request, $id)
     {
         $request->validate([
             'nom_region' => 'required|string|max:255|unique:regions,nom_region,' . $id,
+        ], [
+            'nom_region.required' => 'اسم المنطقة مطلوب.',
+            'nom_region.unique' => 'هذه المنطقة موجودة بالفعل.',
         ]);
 
         try {
@@ -827,11 +977,11 @@ public function updateActivity(Request $request, $id)
             $region->nom_region = $request->nom_region;
             $region->save();
 
-            return response()->json(['message' => 'Region updated successfully.', 'region' => $region]);
+            return response()->json(['message' => 'تم تحديث المنطقة بنجاح.', 'region' => $region]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Region not found.'], 404);
+            return response()->json(['message' => 'المنطقة غير موجودة.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error updating region: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'خطأ أثناء تحديث المنطقة: ' . $e->getMessage()], 500);
         }
     }
 public function deleteRegion($id)
@@ -839,11 +989,11 @@ public function deleteRegion($id)
         try {
             $region = Region::findOrFail($id);
             $region->delete();
-            return response()->json(['message' => 'Region deleted successfully.']);
+            return response()->json(['message' => 'تم حذف المنطقة بنجاح.']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Region not found.'], 404);
+            return response()->json(['message' => 'المنطقة غير موجودة.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error deleting region: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'خطأ أثناء حذف المنطقة: ' . $e->getMessage()], 500);
         }
     }
 
@@ -852,21 +1002,27 @@ public function deleteRegion($id)
     {
         $request->validate([
             'specialite' => 'required|string|max:255|unique:doctors,specialite',
+        ], [
+            'specialite.required' => 'التخصص مطلوب.',
+            'specialite.unique' => 'هذا التخصص موجود بالفعل.',
         ]);
 
         try {
             $doctor = Doctor::create([
                 'specialite' => $request->specialite,
             ]);
-            return response()->json(['message' => 'Doctor speciality added successfully.', 'doctor' => $doctor], 201);
+            return response()->json(['message' => 'تم إضافة تخصص الطبيب بنجاح.', 'doctor' => $doctor], 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error adding doctor speciality: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'خطأ أثناء إضافة تخصص الطبيب: ' . $e->getMessage()], 500);
         }
     }
  public function updateDoctor(Request $request, $id)
     {
         $request->validate([
             'specialite' => 'required|string|max:255|unique:doctors,specialite,' . $id,
+        ], [
+            'specialite.required' => 'التخصص مطلوب.',
+            'specialite.unique' => 'هذا التخصص موجود بالفعل.',
         ]);
 
         try {
@@ -874,11 +1030,11 @@ public function deleteRegion($id)
             $doctor->specialite = $request->specialite;
             $doctor->save();
 
-            return response()->json(['message' => 'Doctor speciality updated successfully.', 'doctor' => $doctor]);
+            return response()->json(['message' => 'تم تحديث تخصص الطبيب بنجاح.', 'doctor' => $doctor]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Doctor speciality not found.'], 404);
+            return response()->json(['message' => 'تخصص الطبيب غير موجود.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error updating doctor speciality: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'خطأ أثناء تحديث تخصص الطبيب: ' . $e->getMessage()], 500);
         }
     }
   public function deleteDoctor($id)
@@ -886,11 +1042,11 @@ public function deleteRegion($id)
         try {
             $doctor = Doctor::findOrFail($id);
             $doctor->delete();
-            return response()->json(['message' => 'Doctor speciality deleted successfully.']);
+            return response()->json(['message' => 'تم حذف تخصص الطبيب بنجاح.']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Doctor speciality not found.'], 404);
+            return response()->json(['message' => 'تخصص الطبيب غير موجود.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error deleting doctor speciality: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'خطأ أثناء حذف تخصص الطبيب: ' . $e->getMessage()], 500);
         }
     }
 
