@@ -281,7 +281,7 @@ class PublicController extends Controller
     public function getAdminTuteurs()
     {
         try {
-            $tuteurs = \App\Tuteur::with(['enfants', 'region'])->orderBy('created_at', 'desc')->get();
+            $tuteurs = \App\Tuteur::with(['enfants.doctors', 'region'])->orderBy('created_at', 'desc')->get();
             return response()->json($tuteurs);
         } catch (\Exception $e) {
             Log::error('Error fetching admin tuteurs', [

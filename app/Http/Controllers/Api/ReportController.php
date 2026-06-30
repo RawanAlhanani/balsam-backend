@@ -151,8 +151,8 @@ class ReportController extends Controller
         $month = $request->month;
         $year = $request->year;
 
-        // Current Month Transactions
-        $query = FinanceTransaction::with(['tuteur', 'enfant']);
+        // Current Month Transactions with optimized eager loading
+        $query = FinanceTransaction::with(['tuteur:id,id,nom_tuteur,prenom_tuteur,email_tuteur', 'enfant:id,id,nom_enfant,prenom_enfant']);
         if ($month && $year) {
             $query->whereMonth('date', $month)
                   ->whereYear('date', $year);
