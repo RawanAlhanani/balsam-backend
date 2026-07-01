@@ -17,7 +17,7 @@ class CreateInfosTable extends Migration
             $table->id();
             $table->timestamps();
             $table->string('titre');
-            $table->string('description');
+            $table->string('description', 1000);
             $table->string('image_info');
         });
     }

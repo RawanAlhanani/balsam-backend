@@ -17,7 +17,8 @@ class CreatePageAutismesTable extends Migration
             $table->id();
             $table->timestamps();
             $table->string('titre');
-            $table->string('description');
+            $table->string('description', 1000)->nullable();
+            $table->json('structured_description')->nullable(); // Added structured_description column
             $table->string('page_image');
         });
     }

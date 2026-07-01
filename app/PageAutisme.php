@@ -7,38 +7,39 @@ use Illuminate\Database\Eloquent\Model;
 class PageAutisme extends Model
 {
     protected $fillable = [
-        'titre', 'description', 'page_image', 'description_json'
+        'titre', 'description', 'page_image', 'structured_description'
     ];
 
     protected $casts = [
-        'description_json' => 'array',
+        'structured_description' => 'array',
     ];
 
     /**
      * Append a computed structured description to the model's array/json form.
      */
-    protected $appends = ['structured_description'];
+    protected $appends = ['structured_description_data']; // Renamed to avoid conflict with cast attribute
 
     /**
      * Returns a structured description object.
-     * Uses `description_json` when present; falls back to legacy `description` wrapped as a single section.
+     * Uses structured_description when present; falls back to legacy description wrapped as a single section.
      * Now supports the enhanced block-based structure.
      *
      * @return array
      */
-    public function getStructuredDescriptionAttribute()
+    public function getStructuredDescriptionDataAttribute() // Renamed accessor
     {
-        if (!empty($this->description_json) && is_array($this->description_json)) {
-            // Check if it's the new enhanced structure
-            if (isset($this->description_json['sections']) && is_array($this->description_json['sections'])) {
-                return $this->description_json;
+        $structuredData = $this->attributes['structured_description'] ?? null;
+
+        if (!empty($structuredData)) {
+            // Laravel's casting already decodes it, so $structuredData is already an array
+            if (is_array($structuredData) && isset($structuredData['sections']) && is_array($structuredData['sections'])) {
+                return $structuredData;
             }
-            
-            // Handle old structure and convert to new format
-            return $this->convertOldStructureToNew($this->description_json);
+            // If it's old structured_description format (e.g., a simple string or an array not matching new structure), convert it
+            return $this->convertOldStructureToNew($structuredData);
         }
 
-        // Fallback for very old data
+        // Fallback for very old data or if structured_description is empty
         return [
             'sections' => [
                 [
@@ -53,14 +54,29 @@ class PageAutisme extends Model
     /**
      * Convert old JSON structure to new enhanced structure
      *
-     * @param array $oldStructure
+     * @param array|string $oldStructure
      * @return array
      */
     private function convertOldStructureToNew($oldStructure)
     {
+        // If it's a simple string, wrap it as a paragraph
+        if (is_string($oldStructure)) {
+            return [
+                'sections' => [
+                    [
+                        'id' => uniqid('paragraph_', true),
+                        'type' => 'paragraph',
+                        'content' => $oldStructure
+                    ]
+                ]
+            ];
+        }
+
+        // If it's an array but not in the new 'sections' format, try to convert
         $newStructure = ['sections' => []];
-        
-        if (isset($oldStructure['sections'])) {
+
+        // This part assumes $oldStructure is an array, potentially from an older structured format
+        if (is_array($oldStructure) && isset($oldStructure['sections'])) {
             foreach ($oldStructure['sections'] as $section) {
                 if (!empty($section['subtitle'])) {
                     $newStructure['sections'][] = [
@@ -70,7 +86,7 @@ class PageAutisme extends Model
                         'content' => $section['subtitle']
                     ];
                 }
-                
+
                 if (!empty($section['text'])) {
                     $newStructure['sections'][] = [
                         'id' => uniqid('paragraph_', true),
@@ -79,8 +95,17 @@ class PageAutisme extends Model
                     ];
                 }
             }
+        } else if (is_array($oldStructure) && !empty($oldStructure)) {
+            // If it's an array but doesn't have 'sections', treat it as a single paragraph or similar
+            // This is a generic fallback, might need more specific logic depending on old data
+            $newStructure['sections'][] = [
+                'id' => uniqid('paragraph_', true),
+                'type' => 'paragraph',
+                'content' => json_encode($oldStructure) // Encode array to string for content
+            ];
         }
-        
+
+
         return $newStructure;
     }
 }

@@ -18,7 +18,7 @@ class CreateFinanceTransactionsTable extends Migration
             $table->enum('type', ['income', 'expense']); // مداخيل أو مصاريف
             $table->string('category'); // e.g. Salaries, Rent, Medical Contribution
             $table->decimal('amount', 10, 2);
-            $table->string('description')->nullable();
+            $table->string('description', 1000)->nullable();
             $table->date('date');
             $table->unsignedBigInteger('tuteur_id')->nullable(); // Optional link to guardian
             $table->unsignedBigInteger('enfant_id')->nullable(); // Optional link to child

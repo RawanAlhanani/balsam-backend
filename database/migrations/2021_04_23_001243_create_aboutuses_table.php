@@ -17,9 +17,10 @@ class CreateAboutusesTable extends Migration
             $table->id();
             $table->timestamps();
             $table->string('titre');
-            $table->string('description');
+            $table->string('description', 1000)->nullable(); // Made nullable and increased length
             $table->string('about_image');
             $table->Integer('status')->default('1');
+            $table->json('structured_description')->nullable();
         });
     }
 

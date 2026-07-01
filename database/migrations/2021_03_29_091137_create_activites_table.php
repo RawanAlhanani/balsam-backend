@@ -17,7 +17,7 @@ class CreateActivitesTable extends Migration
             $table->id();
             $table->timestamps();
             $table->string('titre');
-            $table->string('description');
+            $table->string('description', 1000);
             $table->date('date_activite');
             $table->string('image_activite');
             $table->integer('type_activite_id');
