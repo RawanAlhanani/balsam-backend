@@ -37,7 +37,8 @@ public function showActivity($id)
     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
         return response()->json(['message' => 'النشاط غير موجود.'], 404);
     } catch (\Exception $e) {
-        return response()->json(['message' => 'حدث خطأ ما: ' . $e->getMessage()], 500);
+        Log::error('Error fetching activity', ['id' => $id, 'error' => $e->getMessage()]);
+        return response()->json(['message' => 'حدث خطأ ما.'], 500);
     }
 }
 public function updateActivity(Request $request, $id)
@@ -74,7 +75,7 @@ public function updateActivity(Request $request, $id)
                     \Storage::delete('public/MesImages/' . $activite->image_activite);
                 }
                 $image = $request->file('image_activite');
-                $name = time() . '.' . $image->extension();
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
                 $image->storeAs('public/MesImages', $name);
                 $activite->image_activite = $name;
             }
@@ -125,7 +126,8 @@ public function updateActivity(Request $request, $id)
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'الصفحة غير موجودة.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'حدث خطأ ما: ' . $e->getMessage()], 500);
+            Log::error('Error fetching static page', ['type' => $type, 'id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'حدث خطأ ما.'], 500);
         }
     }
 
@@ -160,7 +162,7 @@ public function updateActivity(Request $request, $id)
 
             if ($request->hasFile('image_activite')) {
                 $image = $request->file('image_activite');
-                $name = time() . '.' . $image->extension();
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
                 $image->storeAs('public/MesImages', $name);
                 $activite->image_activite = $name;
             }
@@ -213,7 +215,8 @@ public function updateActivity(Request $request, $id)
 
     // News (Infos)
     public function getNews() {
-        return response()->json(Info::all());
+        $perPage = min(max((int) request('per_page', 10), 1), 100);
+        return response()->json(Info::orderBy('created_at', 'desc')->paginate($perPage));
     }
  public function showNews($id)
     {
@@ -223,7 +226,8 @@ public function updateActivity(Request $request, $id)
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'الخبر غير موجود.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'حدث خطأ ما: ' . $e->getMessage()], 500);
+            Log::error('Error fetching news item', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'حدث خطأ ما.'], 500);
         }
     }
 
@@ -245,7 +249,7 @@ public function updateActivity(Request $request, $id)
             $info = new Info($request->all());
             if ($request->hasFile('image_info')) {
                 $image = $request->file('image_info');
-                $name = time() . '.' . $image->extension();
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
                 $image->storeAs('public/MesImages', $name);
                 $info->image_info = $name;
             }
@@ -295,7 +299,7 @@ public function updateActivity(Request $request, $id)
                     \Storage::delete('public/MesImages/' . $info->image_info);
                 }
                 $image = $request->file('image_info');
-                $name = time() . '.' . $image->extension();
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
                 $image->storeAs('public/MesImages', $name);
                 $info->image_info = $name;
             }
@@ -369,7 +373,7 @@ public function updateActivity(Request $request, $id)
             $partner = new Partenaire(['nomPartenaire' => $request->nomPartenaire]);
             if ($request->hasFile('imagePartenaire')) {
                 $image = $request->file('imagePartenaire');
-                $name = time() . '.' . $image->extension();
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
                 $image->storeAs('public/MesImages', $name);
                 $partner->imagePartenaire = $name;
             }
@@ -415,7 +419,7 @@ public function updateActivity(Request $request, $id)
                     \Storage::delete('public/MesImages/' . $partner->imagePartenaire);
                 }
                 $image = $request->file('imagePartenaire');
-                $name = time() . '.' . $image->extension();
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
                 $image->storeAs('public/MesImages', $name);
                 $partner->imagePartenaire = $name;
             }
@@ -488,7 +492,7 @@ public function updateActivity(Request $request, $id)
             $slider = new ImagesPrincipales();
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
-                $name = time() . '.' . $image->extension();
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
                 $image->storeAs('public/MesImages', $name);
                 $slider->nomImage = $name;
             }
@@ -509,6 +513,52 @@ public function updateActivity(Request $request, $id)
                 'trace' => $e->getTraceAsString()
             ]);
             return response()->json(['message' => 'خطأ أثناء إنشاء الصورة المتحركة.'], 500);
+        }
+    }
+
+    public function updateSlider(Request $request, $id) {
+        try {
+            $request->validate([
+                "image" => "required|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
+            ], [
+                'image.required' => 'الصورة مطلوبة.',
+                'image.image' => 'يجب أن يكون الملف صورة.',
+                'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
+            ]);
+
+            $slider = ImagesPrincipales::findOrFail($id);
+
+            if ($request->hasFile('image')) {
+                if ($slider->nomImage) {
+                    \Storage::delete('public/MesImages/' . $slider->nomImage);
+                }
+                $image = $request->file('image');
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
+                $image->storeAs('public/MesImages', $name);
+                $slider->nomImage = $name;
+            }
+            $slider->save();
+
+            Log::info('Slider updated', [
+                'slider_id' => $slider->id,
+                'admin_user' => auth()->user()->email ?? 'unknown'
+            ]);
+
+            return response()->json(['message' => 'تم تحديث الصورة بنجاح.', 'data' => $slider]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Slider not found for update', ['id' => $id]);
+            return response()->json(['message' => 'الصورة غير موجودة.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Slider update validation failed', ['errors' => $e->errors(), 'id' => $id]);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating slider', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'خطأ أثناء تحديث الصورة.'], 500);
         }
     }
 
@@ -538,7 +588,8 @@ public function updateActivity(Request $request, $id)
 
     // Gallery (Expo)
     public function getGallery() {
-        return response()->json(ImageExpo::all());
+        $perPage = min(max((int) request('per_page', 12), 1), 100);
+        return response()->json(ImageExpo::orderBy('created_at', 'desc')->paginate($perPage));
     }
 
     public function storeGallery(Request $request) {
@@ -554,7 +605,7 @@ public function updateActivity(Request $request, $id)
             $expo = new ImageExpo();
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
-                $name = time() . '.' . $image->extension();
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
                 $image->storeAs('public/MesImages', $name);
                 $expo->nomImage = $name;
             }
@@ -575,6 +626,52 @@ public function updateActivity(Request $request, $id)
                 'trace' => $e->getTraceAsString()
             ]);
             return response()->json(['message' => 'خطأ أثناء إنشاء صورة المعرض.'], 500);
+        }
+    }
+
+    public function updateGallery(Request $request, $id) {
+        try {
+            $request->validate([
+                "image" => "required|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
+            ], [
+                'image.required' => 'الصورة مطلوبة.',
+                'image.image' => 'يجب أن يكون الملف صورة.',
+                'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
+            ]);
+
+            $gallery = ImageExpo::findOrFail($id);
+
+            if ($request->hasFile('image')) {
+                if ($gallery->nomImage) {
+                    \Storage::delete('public/MesImages/' . $gallery->nomImage);
+                }
+                $image = $request->file('image');
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
+                $image->storeAs('public/MesImages', $name);
+                $gallery->nomImage = $name;
+            }
+            $gallery->save();
+
+            Log::info('Gallery image updated', [
+                'gallery_id' => $gallery->id,
+                'admin_user' => auth()->user()->email ?? 'unknown'
+            ]);
+
+            return response()->json(['message' => 'تم تحديث صورة المعرض بنجاح.', 'data' => $gallery]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Gallery image not found for update', ['id' => $id]);
+            return response()->json(['message' => 'صورة المعرض غير موجودة.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Gallery update validation failed', ['errors' => $e->errors(), 'id' => $id]);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating gallery image', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'خطأ أثناء تحديث صورة المعرض.'], 500);
         }
     }
 
@@ -623,157 +720,194 @@ public function updateActivity(Request $request, $id)
     }
 
     public function storeStaticPage(Request $request) {
-        $request->validate([
-            "type" => "required|in:about,autism,projects",
-            "titre" => "required|string|max:255",
-            "description" => "nullable|string|min:10",
-            "image" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
-        ], [
-            'type.required' => 'نوع الصفحة مطلوب.',
-            'titre.required' => 'العنوان مطلوب.',
-            'description.min' => 'يجب أن يكون الوصف 10 أحرف على الأقل.',
-            'image.image' => 'يجب أن يكون الملف صورة.',
-            'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
-            'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
-        ]);
+        try {
+            $request->validate([
+                "type" => "required|in:about,autism,projects",
+                "titre" => "required|string|max:255",
+                "description" => "nullable|string|min:10",
+                "image" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
+            ], [
+                'type.required' => 'نوع الصفحة مطلوب.',
+                'titre.required' => 'العنوان مطلوب.',
+                'description.min' => 'يجب أن يكون الوصف 10 أحرف على الأقل.',
+                'image.image' => 'يجب أن يكون الملف صورة.',
+                'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
+            ]);
 
-        $type = $request->type;
+            $type = $request->type;
 
-        // Prepare base data
-        $data = ['titre' => $request->titre];
+            // Prepare base data
+            $data = ['titre' => $request->titre];
 
-        // Handle description: either legacy string or structured JSON
-        if ($type === 'autism') {
-            // description_json may be passed as a JSON string
-            $descJson = $request->input('description_json');
-            if ($descJson) {
-                // Ensure it's valid JSON before saving
-                $decoded = json_decode($descJson, true);
-                $data['description_json'] = $decoded ?: null;
-                // Also set a fallback plain description (first section text)
-                if (is_array($decoded) && isset($decoded['sections'][0]['text'])) {
-                    $data['description'] = $decoded['sections'][0]['text'];
+            // Handle description: either legacy string or structured JSON
+            if ($type === 'autism') {
+                // description_json may be passed as a JSON string
+                $descJson = $request->input('description_json');
+                if ($descJson) {
+                    // Ensure it's valid JSON before saving
+                    $decoded = json_decode($descJson, true);
+                    $data['description_json'] = $decoded ?: null;
+                    // Also set a fallback plain description (first section text)
+                    if (is_array($decoded) && isset($decoded['sections'][0]['text'])) {
+                        $data['description'] = $decoded['sections'][0]['text'];
+                    } else {
+                        $data['description'] = $request->input('description', '');
+                    }
                 } else {
                     $data['description'] = $request->input('description', '');
                 }
             } else {
                 $data['description'] = $request->input('description', '');
             }
-        } else {
-            $data['description'] = $request->input('description', '');
-        }
 
-        // If id provided, update existing page
-        if ($request->has('id')) {
-            $existingId = $request->id;
-            if ($type === 'about') $page = Aboutus::find($existingId);
-            elseif ($type === 'autism') $page = PageAutisme::find($existingId);
-            else $page = Projet::find($existingId);
+            // If id provided, update existing page
+            if ($request->has('id')) {
+                $existingId = $request->id;
+                if ($type === 'about') $page = Aboutus::find($existingId);
+                elseif ($type === 'autism') $page = PageAutisme::find($existingId);
+                else $page = Projet::find($existingId);
 
-            if (!$page) {
-                return response()->json(['message' => 'غير موجود'], 404);
+                if (!$page) {
+                    return response()->json(['message' => 'غير موجود'], 404);
+                }
+                $page->titre = $data['titre'];
+            } else {
+                if ($type === 'about') $page = new Aboutus($data);
+                elseif ($type === 'autism') $page = new PageAutisme($data);
+                else $page = new Projet($data);
             }
-            $page->titre = $data['titre'];
-        } else {
-            if ($type === 'about') $page = new Aboutus($data);
-            elseif ($type === 'autism') $page = new PageAutisme($data);
-            else $page = new Projet($data);
-        }
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $name = time() . '.' . $image->extension();
-            $image->storeAs('public/MesImages', $name);
-            if ($type === 'projects') $page->projet_image = $name;
-            elseif ($type === 'about') $page->about_image = $name;
-            elseif ($type === 'autism') $page->page_image = $name;
-        }
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
+                $image->storeAs('public/MesImages', $name);
+                if ($type === 'projects') $page->projet_image = $name;
+                elseif ($type === 'about') $page->about_image = $name;
+                elseif ($type === 'autism') $page->page_image = $name;
+            }
 
-        // If description_json provided as array in $data, ensure saving as JSON in model
-        if (isset($data['description_json'])) {
-            $page->description_json = $data['description_json'];
-        }
+            // If description_json provided as array in $data, ensure saving as JSON in model
+            if (isset($data['description_json'])) {
+                $page->description_json = $data['description_json'];
+            }
 
-        $page->description = $data['description'] ?? '';
-        $page->save();
-        return response()->json(['message' => 'تم بنجاح']);
+            $page->description = $data['description'] ?? '';
+            $page->save();
+            return response()->json(['message' => 'تم بنجاح']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Static page creation validation failed', ['errors' => $e->errors()]);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error creating static page', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'خطأ أثناء إنشاء الصفحة.'], 500);
+        }
     }
 
     // ... existing methods ...
 
     public function updateStaticPage(Request $request, $type, $id)
     {
-        $request->validate([
-            "type" => "required|in:about,autism,projects",
-            "titre" => "required|string|max:255",
-            "description" => "nullable|string",
-            "description_json" => "nullable|json",
-            "image" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
-        ], [
-            'type.required' => 'نوع الصفحة مطلوب.',
-            'titre.required' => 'العنوان مطلوب.',
-            'image.image' => 'يجب أن يكون الملف صورة.',
-            'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
-            'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
-        ]);
+        try {
+            $request->validate([
+                "type" => "required|in:about,autism,projects",
+                "titre" => "required|string|max:255",
+                "description" => "nullable|string",
+                "description_json" => "nullable|json",
+                "image" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
+            ], [
+                'type.required' => 'نوع الصفحة مطلوب.',
+                'titre.required' => 'العنوان مطلوب.',
+                'image.image' => 'يجب أن يكون الملف صورة.',
+                'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
+                'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
+            ]);
 
-        $page = null;
-        if ($type === 'about') $page = \App\Aboutus::findOrFail($id);
-        elseif ($type === 'autism') $page = \App\PageAutisme::findOrFail($id);
-        elseif ($type === 'projects') $page = \App\Projet::findOrFail($id);
-        else return response()->json(['message' => 'Invalid static page type.'], 400);
+            $page = null;
+            if ($type === 'about') $page = \App\Aboutus::findOrFail($id);
+            elseif ($type === 'autism') $page = \App\PageAutisme::findOrFail($id);
+            elseif ($type === 'projects') $page = \App\Projet::findOrFail($id);
+            else return response()->json(['message' => 'Invalid static page type.'], 400);
 
-        $page->titre = $request->titre;
+            $page->titre = $request->titre;
 
-        // Handle structured description
-        $descJson = $request->input('description_json');
-        if ($descJson) {
-            $decoded = json_decode($descJson, true);
-            $page->structured_description = $decoded ?: null;
-            $page->description = null; // Clear old description
-        } else {
-            $page->description = $request->input('description', '');
-            $page->structured_description = null; // Clear structured description
-        }
-
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            $oldImage = null;
-            if ($type === 'projects') $oldImage = $page->projet_image;
-            elseif ($type === 'about') $oldImage = $page->about_image;
-            elseif ($type === 'autism') $oldImage = $page->page_image;
-
-            if ($oldImage) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete('MesImages/' . $oldImage);
+            // Handle structured description
+            $descJson = $request->input('description_json');
+            if ($descJson) {
+                $decoded = json_decode($descJson, true);
+                $page->structured_description = $decoded ?: null;
+                $page->description = null; // Clear old description
+            } else {
+                $page->description = $request->input('description', '');
+                $page->structured_description = null; // Clear structured description
             }
 
-            $image = $request->file('image');
-            $name = time() . '.' . $image->extension();
-            $image->storeAs('public/MesImages', $name);
-            if ($type === 'projects') $page->projet_image = $name;
-            elseif ($type === 'about') $page->about_image = $name;
-            elseif ($type === 'autism') $page->page_image = $name;
+            if ($request->hasFile('image')) {
+                // Delete old image if exists
+                $oldImage = null;
+                if ($type === 'projects') $oldImage = $page->projet_image;
+                elseif ($type === 'about') $oldImage = $page->about_image;
+                elseif ($type === 'autism') $oldImage = $page->page_image;
+
+                if ($oldImage) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete('MesImages/' . $oldImage);
+                }
+
+                $image = $request->file('image');
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
+                $image->storeAs('public/MesImages', $name);
+                if ($type === 'projects') $page->projet_image = $name;
+                elseif ($type === 'about') $page->about_image = $name;
+                elseif ($type === 'autism') $page->page_image = $name;
+            }
+
+            $page->save();
+
+            return response()->json(['message' => 'Static page updated successfully.', 'page' => $page], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Static page not found for update', ['type' => $type, 'id' => $id]);
+            return response()->json(['message' => 'الصفحة غير موجودة.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Static page update validation failed', ['errors' => $e->errors(), 'type' => $type, 'id' => $id]);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating static page', [
+                'type' => $type,
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'خطأ أثناء تحديث الصفحة.'], 500);
         }
-
-        $page->save();
-
-        return response()->json(['message' => 'Static page updated successfully.', 'page' => $page], 200);
     }
 
     // ... existing storeStaticPage method (should be for POST only) ...
 
 
     public function deleteStaticPage($type, $id) {
-        if ($type === 'about') $page = Aboutus::find($id);
-        elseif ($type === 'autism') $page = PageAutisme::find($id);
-        else $page = Projet::find($id);
+        try {
+            if ($type === 'about') $page = Aboutus::find($id);
+            elseif ($type === 'autism') $page = PageAutisme::find($id);
+            else $page = Projet::find($id);
 
-        if (!$page) {
-            return response()->json(['message' => 'غير موجود'], 404);
+            if (!$page) {
+                return response()->json(['message' => 'غير موجود'], 404);
+            }
+
+            $page->delete();
+            return response()->json(['message' => 'تم الحذف']);
+        } catch (\Exception $e) {
+            Log::error('Error deleting static page', [
+                'type' => $type,
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'خطأ أثناء حذف الصفحة.'], 500);
         }
-
-        $page->delete();
-        return response()->json(['message' => 'تم الحذف']);
     }
 
     // Admin Accounts
@@ -907,7 +1041,8 @@ public function updateActivity(Request $request, $id)
             ]);
             return response()->json(['message' => 'تم إضافة نوع النشاط بنجاح.', 'type' => $type], 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'خطأ أثناء إضافة نوع النشاط: ' . $e->getMessage()], 500);
+            Log::error('Error creating activity type', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء إضافة نوع النشاط.'], 500);
         }
     }
  public function updateType(Request $request, $id)
@@ -927,7 +1062,8 @@ public function updateActivity(Request $request, $id)
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'نوع النشاط غير موجود.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'خطأ أثناء تحديث نوع النشاط: ' . $e->getMessage()], 500);
+            Log::error('Error updating activity type', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء تحديث نوع النشاط.'], 500);
         }
     }
   public function deleteType($id)
@@ -939,7 +1075,8 @@ public function updateActivity(Request $request, $id)
          } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
              return response()->json(['message' => 'نوع النشاط غير موجود.'], 404);
          } catch (\Exception $e) {
-             return response()->json(['message' => 'خطأ أثناء حذف نوع النشاط: ' . $e->getMessage()], 500);
+             Log::error('Error deleting activity type', ['id' => $id, 'error' => $e->getMessage()]);
+             return response()->json(['message' => 'خطأ أثناء حذف نوع النشاط.'], 500);
          }
      }
 
@@ -959,7 +1096,8 @@ public function updateActivity(Request $request, $id)
             ]);
             return response()->json(['message' => 'تم إضافة المنطقة بنجاح.', 'region' => $region], 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'خطأ أثناء إضافة المنطقة: ' . $e->getMessage()], 500);
+            Log::error('Error creating region', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء إضافة المنطقة.'], 500);
         }
     }
 
@@ -981,7 +1119,8 @@ public function updateActivity(Request $request, $id)
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'المنطقة غير موجودة.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'خطأ أثناء تحديث المنطقة: ' . $e->getMessage()], 500);
+            Log::error('Error updating region', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء تحديث المنطقة.'], 500);
         }
     }
 public function deleteRegion($id)
@@ -993,7 +1132,8 @@ public function deleteRegion($id)
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'المنطقة غير موجودة.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'خطأ أثناء حذف المنطقة: ' . $e->getMessage()], 500);
+            Log::error('Error deleting region', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء حذف المنطقة.'], 500);
         }
     }
 
@@ -1013,7 +1153,8 @@ public function deleteRegion($id)
             ]);
             return response()->json(['message' => 'تم إضافة تخصص الطبيب بنجاح.', 'doctor' => $doctor], 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'خطأ أثناء إضافة تخصص الطبيب: ' . $e->getMessage()], 500);
+            Log::error('Error creating doctor speciality', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء إضافة تخصص الطبيب.'], 500);
         }
     }
  public function updateDoctor(Request $request, $id)
@@ -1034,7 +1175,8 @@ public function deleteRegion($id)
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'تخصص الطبيب غير موجود.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'خطأ أثناء تحديث تخصص الطبيب: ' . $e->getMessage()], 500);
+            Log::error('Error updating doctor speciality', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء تحديث تخصص الطبيب.'], 500);
         }
     }
   public function deleteDoctor($id)
@@ -1046,7 +1188,8 @@ public function deleteRegion($id)
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'تخصص الطبيب غير موجود.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'خطأ أثناء حذف تخصص الطبيب: ' . $e->getMessage()], 500);
+            Log::error('Error deleting doctor speciality', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء حذف تخصص الطبيب.'], 500);
         }
     }
 

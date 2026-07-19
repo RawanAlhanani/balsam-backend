@@ -21,9 +21,7 @@ class AuthController extends Controller
 
             $tuteur = Tuteur::where('nom_utilisateur', $request->login)->first();
 
-            // Support both hashed and legacy plain text (for initial transition if needed)
-            // Better: migrate all to hashed. For now, we check Hash first.
-            if (!$tuteur || (!Hash::check($request->mdp, $tuteur->mot_de_pass) && $tuteur->mot_de_pass !== $request->mdp)) {
+            if (!$tuteur || !Hash::check($request->mdp, $tuteur->mot_de_pass)) {
                 Log::warning('Login attempt failed', [
                     'login' => $request->login,
                     'ip' => $request->ip(),
@@ -141,7 +139,8 @@ class AuthController extends Controller
                 "avs" => "required|string|max:50",
                 "etude" => "required|string|max:50",
                 "type_Tuteur" => "required|integer",
-                "formation" => "required|integer"
+                "formation" => "required|integer",
+                "photo" => "nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048",
             ]);
 
             $tuteur = new \App\Tuteur([
@@ -175,7 +174,7 @@ class AuthController extends Controller
 
             if ($request->hasFile('photo')) {
                 $image = $request->file('photo');
-                $name = time() . '.' . $image->extension();
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
                 $image->storeAs('public/MesImages', $name);
                 $enfant->photo = $name;
             }
@@ -313,6 +312,7 @@ class AuthController extends Controller
                 "prenom_enfant"=>"nullable|string|max:100",
                 "date_naissance"=>"nullable|date|before:today",
                 "sexeEnfant"=>"nullable|in:male,female",
+                "photo"=>"nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048",
             ]);
 
             $updateData = [
@@ -349,7 +349,7 @@ class AuthController extends Controller
 
             if ($request->hasFile('photo')) {
                 $image = $request->file('photo');
-                $name = time() . '.' . $image->extension();
+                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
                 $image->storeAs('public/MesImages', $name);
                 $enfant->photo = $name;
                 $enfant->save();

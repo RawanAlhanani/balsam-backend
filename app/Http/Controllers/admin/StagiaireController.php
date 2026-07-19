@@ -49,7 +49,9 @@ class StagiaireController extends Controller
             'duree_stage'      => $duree,
             'cv_path'          => $cvPath,
             'nom_utilisateur'  => strstr($request->email, '@', true) . rand(10, 99), // اسم مستخدم افتراضي
-            'mot_de_pass'      => Hash::make('Balsam@2026') // كلمة مرور افتراضية لحين تعديلها
+            // Stagiaires have no self-service login (see CLAUDE.md) — this column is
+            // NOT NULL on the table but the value itself must never be shared or guessable.
+            'mot_de_pass'      => Hash::make(Str::random(32)),
         ]);
 
         return response()->json([

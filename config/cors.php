@@ -19,7 +19,14 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    // '*' can't be combined safely with supports_credentials below — it lets any
+    // site make cookie/token-bearing requests. List real origins instead; set
+    // FRONTEND_URL in .env to the deployed React app's origin.
+    'allowed_origins' => array_values(array_filter([
+        env('FRONTEND_URL'),
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+    ])),
 
     'allowed_origins_patterns' => [],
 

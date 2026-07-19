@@ -95,7 +95,8 @@ class PublicController extends Controller
     public function getNews()
     {
         try {
-            $news = Info::orderBy('created_at', 'DESC')->get();
+            $perPage = min(max((int) request('per_page', 9), 1), 50);
+            $news = Info::orderBy('created_at', 'DESC')->paginate($perPage);
             return response()->json($news);
         } catch (\Exception $e) {
             Log::error('Error fetching news', [
@@ -182,7 +183,8 @@ class PublicController extends Controller
     public function getPhotos()
     {
         try {
-            $photos = ImageExpo::orderBy('updated_at', 'desc')->get();
+            $perPage = min(max((int) request('per_page', 12), 1), 50);
+            $photos = ImageExpo::orderBy('updated_at', 'desc')->paginate($perPage);
             return response()->json($photos);
         } catch (\Exception $e) {
             Log::error('Error fetching photos', [
