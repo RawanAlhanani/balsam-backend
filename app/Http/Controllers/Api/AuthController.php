@@ -8,6 +8,7 @@ use App\Tuteur;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -143,52 +144,59 @@ class AuthController extends Controller
                 "photo" => "nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048",
             ]);
 
-            $tuteur = new \App\Tuteur([
-                'account_type' => 'beneficiary',
-                'nom_tuteur' => $request->nom_tuteur,
-                'prenom_tuteur' => $request->prenom_tuteur,
-                'adresse' => $request->adresse,
-                'CIN' => $request->CIN,
-                'region_id' => $request->region_id,
-                'email_tuteur' => $request->email_tuteur,
-                'telephon' => $request->telephon,
-                'whatsapp' => $request->whatsapp,
-                'type_Tuteur' => $request->type_Tuteur,
-                'formation' => $request->formation,
-                'nom_utilisateur' => $request->nom_utilisateur,
-                'mot_de_pass' => Hash::make($request->mot_de_pass)
-            ]);
+            // Wrapped in a transaction so a failure partway through (e.g. the
+            // enfant insert) can't leave an orphaned tuteur row behind with
+            // no child record — previously each ->save() committed independently.
+            [$tuteur, $enfant] = DB::transaction(function () use ($request) {
+                $tuteur = new \App\Tuteur([
+                    'account_type' => 'beneficiary',
+                    'nom_tuteur' => $request->nom_tuteur,
+                    'prenom_tuteur' => $request->prenom_tuteur,
+                    'adresse' => $request->adresse,
+                    'CIN' => $request->CIN,
+                    'region_id' => $request->region_id,
+                    'email_tuteur' => $request->email_tuteur,
+                    'telephon' => $request->telephon,
+                    'whatsapp' => $request->whatsapp,
+                    'type_Tuteur' => $request->type_Tuteur,
+                    'formation' => $request->formation,
+                    'nom_utilisateur' => $request->nom_utilisateur,
+                    'mot_de_pass' => Hash::make($request->mot_de_pass)
+                ]);
 
-            $tuteur->save();
+                $tuteur->save();
 
-            $enfant = new \App\Enfant([
-                'nom_enfant' => $request->nom_enfant,
-                'prenom_enfant' => $request->prenom_enfant,
-                'date_naissance' => $request->date_naissance,
-                'sexeEnfant' => $request->sexeEnfant,
-                'statut' => $request->statut,
-                'parole' => $request->parole,
-                'avs' => $request->avs,
-                'etude' => $request->etude,
-            ]);
+                $enfant = new \App\Enfant([
+                    'nom_enfant' => $request->nom_enfant,
+                    'prenom_enfant' => $request->prenom_enfant,
+                    'date_naissance' => $request->date_naissance,
+                    'sexeEnfant' => $request->sexeEnfant,
+                    'statut' => $request->statut,
+                    'parole' => $request->parole,
+                    'avs' => $request->avs,
+                    'etude' => $request->etude,
+                ]);
 
-            if ($request->hasFile('photo')) {
-                $image = $request->file('photo');
-                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
-                $image->storeAs('public/MesImages', $name);
-                $enfant->photo = $name;
-            }
-
-            $tuteur->enfants()->save($enfant);
-
-            if ($request->doctor) {
-                foreach ($request->doctor as $v) {
-                    $specialite = new \App\doctor_enfant;
-                    $specialite->enfant_id = $enfant->id;
-                    $specialite->doctor_id = $v;
-                    $specialite->save();
+                if ($request->hasFile('photo')) {
+                    $image = $request->file('photo');
+                    $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
+                    $image->storeAs('public/MesImages', $name);
+                    $enfant->photo = $name;
                 }
-            }
+
+                $tuteur->enfants()->save($enfant);
+
+                if ($request->doctor) {
+                    foreach ($request->doctor as $v) {
+                        $specialite = new \App\doctor_enfant;
+                        $specialite->enfant_id = $enfant->id;
+                        $specialite->doctor_id = $v;
+                        $specialite->save();
+                    }
+                }
+
+                return [$tuteur, $enfant];
+            });
 
             Log::info('New beneficiary registered', [
                 'user_id' => $tuteur->id,
@@ -334,31 +342,42 @@ class AuthController extends Controller
                 $updateData['mot_de_pass'] = Hash::make($request->input('mot_de_pass'));
             }
 
-            $tuteur->update($updateData);
+            // Wrapped in a transaction so a failure partway through (e.g. the
+            // enfant update) doesn't leave the tuteur record updated while the
+            // rest silently didn't apply.
+            DB::transaction(function () use ($request, $tuteur, $enfant, $updateData) {
+                $tuteur->update($updateData);
 
-            $enfant->update([
-                'nom_enfant' => $request->input('nom_enfant'),
-                'prenom_enfant' => $request->input('prenom_enfant'),
-                'date_naissance' => $request->input('date_naissance'),
-                'sexeEnfant' => $request->input('sexeEnfant'),
-                'statut' => $request->input('statut'),
-                'parole' => $request->input('parole'),
-                'avs' => $request->input('avs'),
-                'etude' => $request->input('etude'),
-            ]);
+                // volunteer/admin_request accounts have no Enfant row — only
+                // beneficiary accounts do. Without this guard, every profile
+                // update from a non-beneficiary account throws (member
+                // function on null) and 500s.
+                if ($enfant) {
+                    $enfant->update([
+                        'nom_enfant' => $request->input('nom_enfant'),
+                        'prenom_enfant' => $request->input('prenom_enfant'),
+                        'date_naissance' => $request->input('date_naissance'),
+                        'sexeEnfant' => $request->input('sexeEnfant'),
+                        'statut' => $request->input('statut'),
+                        'parole' => $request->input('parole'),
+                        'avs' => $request->input('avs'),
+                        'etude' => $request->input('etude'),
+                    ]);
 
-            if ($request->hasFile('photo')) {
-                $image = $request->file('photo');
-                $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
-                $image->storeAs('public/MesImages', $name);
-                $enfant->photo = $name;
-                $enfant->save();
-            }
+                    if ($request->hasFile('photo')) {
+                        $image = $request->file('photo');
+                        $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
+                        $image->storeAs('public/MesImages', $name);
+                        $enfant->photo = $name;
+                        $enfant->save();
+                    }
 
-            $enfant->doctors()->detach();
-            if ($request->doctor) {
-                $enfant->doctors()->attach($request->doctor);
-            }
+                    $enfant->doctors()->detach();
+                    if ($request->doctor) {
+                        $enfant->doctors()->attach($request->doctor);
+                    }
+                }
+            });
 
             Log::info('User profile updated', [
                 'user_id' => $tuteur->id,

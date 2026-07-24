@@ -293,4 +293,57 @@ class PublicController extends Controller
             return response()->json(['message' => 'Error fetching tuteurs.'], 500);
         }
     }
+
+    public function getTeam()
+    {
+        try {
+            $team = \App\LoginAdmin::whereIn('role', ['president', 'vice_president', 'secretary', 'treasurer'])
+                ->get(['name', 'email', 'role']);
+            return response()->json($team);
+        } catch (\Exception $e) {
+            Log::error('Error fetching public team list', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل بيانات الفريق.'], 500);
+        }
+    }
+
+    public function submitContact(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+                'subject' => 'required|string|max:255',
+                'message' => 'required|string|min:10',
+            ], [
+                'name.required' => 'الاسم حقل إجباري.',
+                'email.required' => 'البريد الإلكتروني حقل إجباري.',
+                'email.email' => 'الرجاء إدخال بريد إلكتروني صحيح.',
+                'subject.required' => 'الموضوع حقل إجباري.',
+                'message.required' => 'نص الرسالة حقل إجباري.',
+                'message.min' => 'الرجاء كتابة رسالة أكثر تفصيلاً (10 أحرف على الأقل).',
+            ]);
+
+            $contactMessage = \App\ContactMessage::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'subject' => $request->subject,
+                'message' => $request->message,
+            ]);
+
+            Log::info('New contact message received', ['id' => $contactMessage->id, 'ip' => $request->ip()]);
+
+            return response()->json([
+                'message' => 'شكراً لتواصلكم معنا، تم إرسال رسالتكم بنجاح وسنقوم بالرد عليكم في أقرب وقت ممكن.'
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error submitting contact message', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip()
+            ]);
+            return response()->json(['message' => 'حدث خطأ أثناء إرسال رسالتكم. الرجاء المحاولة مرة أخرى.'], 500);
+        }
+    }
 }

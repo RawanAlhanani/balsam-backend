@@ -1193,7 +1193,36 @@ public function deleteRegion($id)
         }
     }
 
+    public function getContactMessages()
+    {
+        try {
+            $perPage = min(max((int) request('per_page', 15), 1), 100);
+            return response()->json(\App\ContactMessage::orderBy('created_at', 'desc')->paginate($perPage));
+        } catch (\Exception $e) {
+            Log::error('Error fetching contact messages', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ في تحميل رسائل التواصل.'], 500);
+        }
+    }
 
+    public function deleteContactMessage($id)
+    {
+        try {
+            $message = \App\ContactMessage::findOrFail($id);
+            $message->delete();
+
+            Log::info('Contact message deleted', [
+                'contact_message_id' => $id,
+                'admin_user' => auth()->user()->email ?? 'unknown'
+            ]);
+
+            return response()->json(['message' => 'تم حذف الرسالة بنجاح.']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'الرسالة غير موجودة.'], 404);
+        } catch (\Exception $e) {
+            Log::error('Error deleting contact message', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء حذف الرسالة.'], 500);
+        }
+    }
 
 }
     // ... other methods ...

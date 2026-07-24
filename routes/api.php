@@ -48,6 +48,8 @@ Route::group(['namespace' => 'Api'], function () {
     Route::get('/autisme-pages/{id}', 'PublicController@getAutismePage');
     Route::get('/registration-data', 'PublicController@getRegistrationData');
     Route::get('/generer/{id_activite}/{id_tuteur}', 'PublicController@genererPDF');
+    Route::post('/contact', 'PublicController@submitContact')->middleware('throttle:20,1');
+    Route::get('/team', 'PublicController@getTeam');
 
     // Admin routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -115,6 +117,10 @@ Route::group(['namespace' => 'Api'], function () {
             // Admin Volunteers — moved inside auth + role gate (was completely public before)
             Route::get('/admin/volunteers', '\App\Http\Controllers\admin\VolunteerController@index');
             Route::delete('/admin/volunteers/{id}', '\App\Http\Controllers\admin\VolunteerController@destroy');
+
+            // Contact form submissions inbox
+            Route::get('/admin/contact-messages', 'AdminController@getContactMessages');
+            Route::delete('/admin/contact-messages/{id}', 'AdminController@deleteContactMessage');
         });
 
         // Restricted routes based on roles
