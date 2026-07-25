@@ -36,5 +36,4 @@ jobs:
             **/tests/**
             .env
             .env.example
-            storage/**
             .github/**
