@@ -298,7 +298,7 @@ class PublicController extends Controller
     {
         try {
             $team = \App\LoginAdmin::whereIn('role', ['president', 'vice_president', 'secretary', 'treasurer'])
-                ->get(['name', 'email', 'role']);
+                ->get(['id', 'name', 'email', 'role']);
             return response()->json($team);
         } catch (\Exception $e) {
             Log::error('Error fetching public team list', ['error' => $e->getMessage()]);

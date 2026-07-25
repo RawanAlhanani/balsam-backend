@@ -29,7 +29,7 @@ class AuthController extends Controller
                     'user_exists' => $tuteur !== null
                 ]);
                 return response()->json([
-                    'message' => 'اسم المستخدم أوكلمة المرور غير صحيحة.'
+                    'message' => 'اسم المستخدم أو كلمة المرور غير صحيحة.'
                 ], 401);
             }
 
@@ -54,7 +54,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'فشل التحقق من البيانات',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
@@ -64,7 +64,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'An error occurred during login'
+                'message' => 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.'
             ], 500);
         }
     }
@@ -217,7 +217,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'فشل التحقق من البيانات',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
@@ -228,7 +228,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'An error occurred during registration'
+                'message' => 'حدث خطأ أثناء التسجيل. الرجاء المحاولة مرة أخرى.'
             ], 500);
         }
     }
@@ -246,7 +246,7 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Successfully logged out'
+                'message' => 'تم تسجيل الخروج بنجاح'
             ]);
         } catch (\Exception $e) {
             Log::error('Logout error', [
@@ -255,7 +255,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'An error occurred during logout'
+                'message' => 'حدث خطأ أثناء تسجيل الخروج.'
             ], 500);
         }
     }
@@ -294,7 +294,72 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'An error occurred while retrieving profile'
+                'message' => 'حدث خطأ أثناء تحميل الملف الشخصي.'
+            ], 500);
+        }
+    }
+
+    // Self-service profile update for the currently authenticated admin —
+    // any role can reach this (unlike /admin/accounts/{id} which is
+    // president-only and lets a president edit *other* admins). Deliberately
+    // does not accept a `role` field: an admin cannot change their own role
+    // here, avoiding accidental self-lockout.
+    public function updateAdminProfile(Request $request)
+    {
+        try {
+            $admin = $request->user();
+
+            if (!($admin instanceof \App\LoginAdmin)) {
+                return response()->json([
+                    'message' => 'هذه الخدمة مخصصة لحسابات الإدارة فقط.'
+                ], 403);
+            }
+
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:150|unique:login_admins,email,' . $admin->id,
+                'password' => 'nullable|string|min:6|max:100',
+            ], [
+                'name.required' => 'الاسم مطلوب.',
+                'email.required' => 'البريد الإلكتروني مطلوب.',
+                'email.unique' => 'هذا البريد الإلكتروني مستخدم بالفعل.',
+                'password.min' => 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.',
+            ]);
+
+            $admin->name = $request->name;
+            $admin->email = $request->email;
+            if ($request->filled('password')) {
+                $admin->password = Hash::make($request->password);
+            }
+            $admin->save();
+
+            Log::info('Admin updated own profile', [
+                'admin_id' => $admin->id,
+                'email' => $admin->email,
+                'ip' => $request->ip()
+            ]);
+
+            return response()->json([
+                'message' => 'تم تحديث الملف الشخصي بنجاح',
+                'admin' => $admin
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Admin self profile update validation failed', [
+                'errors' => $e->errors(),
+                'ip' => $request->ip()
+            ]);
+            return response()->json([
+                'message' => 'فشل التحقق من البيانات',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Admin self profile update error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip()
+            ]);
+            return response()->json([
+                'message' => 'حدث خطأ أثناء تحديث الملف الشخصي.'
             ], 500);
         }
     }
@@ -396,7 +461,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'فشل التحقق من البيانات',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
@@ -407,7 +472,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'An error occurred while updating profile'
+                'message' => 'حدث خطأ أثناء تحديث الملف الشخصي.'
             ], 500);
         }
     }
@@ -434,7 +499,7 @@ class AuthController extends Controller
                 ]);
 
                 return response()->json([
-                    'message' => 'Admin logged in',
+                    'message' => 'تم تسجيل الدخول بنجاح',
                     'is_admin' => true,
                     'token' => $token,
                     'refresh_token' => $refreshToken,
@@ -449,7 +514,7 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Login ou mot de passe non valides !!!!'
+                'message' => 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'
             ], 401);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Admin login validation failed', [
@@ -457,7 +522,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'فشل التحقق من البيانات',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
@@ -467,7 +532,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'An error occurred during admin login'
+                'message' => 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.'
             ], 500);
         }
     }
@@ -487,7 +552,7 @@ class AuthController extends Controller
                     'ip' => $request->ip()
                 ]);
                 return response()->json([
-                    'message' => 'Invalid refresh token'
+                    'message' => 'رمز التحديث غير صالح'
                 ], 401);
             }
 
@@ -498,12 +563,26 @@ class AuthController extends Controller
                     'ip' => $request->ip()
                 ]);
                 return response()->json([
-                    'message' => 'Invalid token type'
+                    'message' => 'نوع الرمز غير صالح'
                 ], 401);
             }
 
             $user = $token->tokenable;
-            
+
+            // The tokenable account may have been deleted after the token was
+            // issued (e.g. an admin/tuteur removed while still "logged in"
+            // elsewhere) — without this check, ->tokens() on null crashes.
+            if (!$user) {
+                Log::warning('Refresh token has no associated account', [
+                    'token_id' => $token->id,
+                    'ip' => $request->ip()
+                ]);
+                $token->delete();
+                return response()->json([
+                    'message' => 'انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.'
+                ], 401);
+            }
+
             // Delete old tokens
             $user->tokens()->where('id', '!=', $token->id)->delete();
             
@@ -531,7 +610,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'فشل التحقق من البيانات',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
@@ -541,7 +620,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return response()->json([
-                'message' => 'An error occurred during token refresh'
+                'message' => 'حدث خطأ أثناء تحديث الجلسة.'
             ], 500);
         }
     }

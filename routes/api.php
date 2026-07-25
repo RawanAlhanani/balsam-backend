@@ -32,6 +32,10 @@ Route::group(['namespace' => 'Api'], function () {
     Route::post('/logout', 'AuthController@logout')->middleware('auth:sanctum');
     Route::get('/profile', 'AuthController@profile')->middleware('auth:sanctum');
     Route::post('/update-profile', 'AuthController@updateProfile')->middleware('auth:sanctum');
+    // Self-service profile update for the logged-in admin (any role) — kept
+    // outside the role-gated /admin/... groups below since it only ever
+    // touches the caller's own account.
+    Route::put('/admin/my-profile', 'AuthController@updateAdminProfile')->middleware('auth:sanctum');
     Route::post('/refresh', 'AuthController@refresh');
 
     Route::get('/home-data', 'PublicController@getHomeData');
@@ -127,6 +131,7 @@ Route::group(['namespace' => 'Api'], function () {
         Route::middleware('role:president')->group(function () {
             Route::get('/admin/accounts', 'AdminController@getAdmins');
             Route::post('/admin/accounts', 'AdminController@storeAdmin');
+            Route::put('/admin/accounts/{id}', 'AdminController@updateAdmin');
             Route::delete('/admin/accounts/{id}', 'AdminController@deleteAdmin');
         });
 

@@ -954,6 +954,63 @@ public function updateActivity(Request $request, $id)
         }
     }
 
+    public function updateAdmin(Request $request, $id) {
+        try {
+            $admin = \App\LoginAdmin::findOrFail($id);
+
+            $request->validate([
+                "name" => "required|string|max:255",
+                "email" => "required|email|max:150|unique:login_admins,email," . $id,
+                "password" => "nullable|string|min:6|max:100",
+                "role" => "required|in:president,vice_president,secretary,vice_secretary,treasurer,vice_treasurer"
+            ], [
+                'name.required' => 'الاسم مطلوب.',
+                'email.required' => 'البريد الإلكتروني مطلوب.',
+                'email.unique' => 'هذا البريد الإلكتروني مستخدم بالفعل.',
+                'password.min' => 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.',
+                'role.required' => 'الدور مطلوب.',
+            ]);
+
+            // Guard against a president locking themselves out by changing
+            // their own role away from president through this form.
+            if ($admin->id === auth()->id() && $admin->role === 'president' && $request->role !== 'president') {
+                return response()->json([
+                    'message' => 'لا يمكنك تغيير صفتك الخاصة كرئيس لتفادي فقدان الوصول للوحة التحكم.'
+                ], 422);
+            }
+
+            $admin->name = $request->name;
+            $admin->email = $request->email;
+            $admin->role = $request->role;
+            if ($request->filled('password')) {
+                $admin->password = \Hash::make($request->password);
+            }
+            $admin->save();
+
+            Log::info('Admin account updated', [
+                'admin_id' => $admin->id,
+                'email' => $admin->email,
+                'role' => $admin->role,
+                'updated_by' => auth()->user()->email ?? 'unknown'
+            ]);
+
+            return response()->json(['message' => 'تم تحديث حساب المسؤول بنجاح', 'admin' => $admin]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Admin not found for update', ['id' => $id]);
+            return response()->json(['message' => 'المسؤول غير موجود.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Admin update validation failed', ['errors' => $e->errors(), 'id' => $id]);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating admin account', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'خطأ أثناء تحديث حساب المسؤول.'], 500);
+        }
+    }
+
     public function deleteAdmin($id) {
         try {
             $admin = \App\LoginAdmin::findOrFail($id);
