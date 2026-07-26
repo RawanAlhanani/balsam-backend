@@ -758,12 +758,12 @@ public function updateActivity(Request $request, $id)
             $request->validate([
                 "type" => "required|in:about,autism,projects",
                 "titre" => "required|string|max:255",
-                "description" => "nullable|string|min:10",
+                "description" => "nullable|string",
+                "description_json" => "nullable|json",
                 "image" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
             ], [
                 'type.required' => 'نوع الصفحة مطلوب.',
                 'titre.required' => 'العنوان مطلوب.',
-                'description.min' => 'يجب أن يكون الوصف 10 أحرف على الأقل.',
                 'image.image' => 'يجب أن يكون الملف صورة.',
                 'image.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
                 'image.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
@@ -771,45 +771,20 @@ public function updateActivity(Request $request, $id)
 
             $type = $request->type;
 
-            // Prepare base data
-            $data = ['titre' => $request->titre];
+            if ($type === 'about') $page = new Aboutus(['titre' => $request->titre]);
+            elseif ($type === 'autism') $page = new PageAutisme(['titre' => $request->titre]);
+            else $page = new Projet(['titre' => $request->titre]);
 
-            // Handle description: either legacy string or structured JSON
-            if ($type === 'autism') {
-                // description_json may be passed as a JSON string
-                $descJson = $request->input('description_json');
-                if ($descJson) {
-                    // Ensure it's valid JSON before saving
-                    $decoded = json_decode($descJson, true);
-                    $data['description_json'] = $decoded ?: null;
-                    // Also set a fallback plain description (first section text)
-                    if (is_array($decoded) && isset($decoded['sections'][0]['text'])) {
-                        $data['description'] = $decoded['sections'][0]['text'];
-                    } else {
-                        $data['description'] = $request->input('description', '');
-                    }
-                } else {
-                    $data['description'] = $request->input('description', '');
-                }
+            // Structured content lives in the same `structured_description` column
+            // across all three models - keep this in sync with updateStaticPage().
+            $descJson = $request->input('description_json');
+            if ($descJson) {
+                $decoded = json_decode($descJson, true);
+                $page->structured_description = $decoded ?: null;
+                $page->description = null;
             } else {
-                $data['description'] = $request->input('description', '');
-            }
-
-            // If id provided, update existing page
-            if ($request->has('id')) {
-                $existingId = $request->id;
-                if ($type === 'about') $page = Aboutus::find($existingId);
-                elseif ($type === 'autism') $page = PageAutisme::find($existingId);
-                else $page = Projet::find($existingId);
-
-                if (!$page) {
-                    return response()->json(['message' => 'غير موجود'], 404);
-                }
-                $page->titre = $data['titre'];
-            } else {
-                if ($type === 'about') $page = new Aboutus($data);
-                elseif ($type === 'autism') $page = new PageAutisme($data);
-                else $page = new Projet($data);
+                $page->description = $request->input('description', '');
+                $page->structured_description = null;
             }
 
             if ($request->hasFile('image')) {
@@ -821,12 +796,6 @@ public function updateActivity(Request $request, $id)
                 elseif ($type === 'autism') $page->page_image = $name;
             }
 
-            // If description_json provided as array in $data, ensure saving as JSON in model
-            if (isset($data['description_json'])) {
-                $page->description_json = $data['description_json'];
-            }
-
-            $page->description = $data['description'] ?? '';
             $page->save();
             return response()->json(['message' => 'تم بنجاح']);
         } catch (\Illuminate\Validation\ValidationException $e) {
