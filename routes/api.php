@@ -54,6 +54,7 @@ Route::group(['namespace' => 'Api'], function () {
     Route::get('/generer/{id_activite}/{id_tuteur}', 'PublicController@genererPDF');
     Route::post('/contact', 'PublicController@submitContact')->middleware('throttle:20,1');
     Route::get('/team', 'PublicController@getTeam');
+    Route::get('/site-settings', 'PublicController@getSiteSettings');
 
     // Admin routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -125,6 +126,10 @@ Route::group(['namespace' => 'Api'], function () {
             // Contact form submissions inbox
             Route::get('/admin/contact-messages', 'AdminController@getContactMessages');
             Route::delete('/admin/contact-messages/{id}', 'AdminController@deleteContactMessage');
+
+            // Site-wide contact info (phone, email, social links)
+            Route::get('/admin/site-settings', 'AdminController@getSiteSettings');
+            Route::put('/admin/site-settings', 'AdminController@updateSiteSettings');
         });
 
         // Restricted routes based on roles

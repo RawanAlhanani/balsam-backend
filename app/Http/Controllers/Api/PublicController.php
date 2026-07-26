@@ -12,10 +12,22 @@ use App\Aboutus;
 use App\Projet;
 use App\Partenaire;
 use App\PageAutisme;
+use App\SiteSetting;
 use Illuminate\Support\Facades\Log;
 
 class PublicController extends Controller
 {
+    public function getSiteSettings()
+    {
+        try {
+            $settings = SiteSetting::first();
+            return response()->json($settings ?? new SiteSetting());
+        } catch (\Exception $e) {
+            Log::error('Error fetching site settings', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل معلومات التواصل.'], 500);
+        }
+    }
+
     public function getHomeData()
     {
         try {

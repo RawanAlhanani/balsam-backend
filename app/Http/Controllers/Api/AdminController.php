@@ -21,10 +21,44 @@ use App\PageAutisme;
 use App\Aboutus;
 use App\Projet;
 use App\Models\StaticPage;
+use App\SiteSetting;
 
 
 class AdminController extends Controller
 {
+    // Site-wide contact info (phone, email, social links) — single row, created on first save.
+    public function getSiteSettings()
+    {
+        return response()->json(SiteSetting::first() ?? new SiteSetting());
+    }
+
+    public function updateSiteSettings(Request $request)
+    {
+        $request->validate([
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'facebook_url' => 'nullable|url|max:255',
+            'instagram_url' => 'nullable|url|max:255',
+        ], [
+            'email.email' => 'صيغة البريد الإلكتروني غير صحيحة.',
+            'facebook_url.url' => 'رابط فيسبوك غير صحيح.',
+            'instagram_url.url' => 'رابط انستغرام غير صحيح.',
+        ]);
+
+        try {
+            $settings = SiteSetting::first();
+            if ($settings) {
+                $settings->update($request->only(['phone', 'email', 'facebook_url', 'instagram_url']));
+            } else {
+                $settings = SiteSetting::create($request->only(['phone', 'email', 'facebook_url', 'instagram_url']));
+            }
+            return response()->json(['message' => 'تم تحديث معلومات التواصل بنجاح.', 'settings' => $settings]);
+        } catch (\Exception $e) {
+            Log::error('Error updating site settings', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء تحديث معلومات التواصل.'], 500);
+        }
+    }
+
     // Activities
     public function getActivities() {
         return response()->json(Activite::with('typeactivite')->get());

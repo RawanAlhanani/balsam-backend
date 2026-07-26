@@ -34,6 +34,7 @@ class ProductionSeeder extends Seeder
             FinanceCategoriesSeeder::class,
             ActivitesSeeder::class,
             InfosSeeder::class,
+            SiteSettingsSeeder::class,
         ]);
 
         Schema::enableForeignKeyConstraints();
