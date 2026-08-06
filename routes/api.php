@@ -140,7 +140,7 @@ Route::group(['namespace' => 'Api'], function () {
             Route::delete('/admin/accounts/{id}', 'AdminController@deleteAdmin');
         });
 
-        Route::middleware('role:president,secretary')->group(function () {
+        Route::middleware('role:president,secretary,vice_secretary')->group(function () {
             Route::get('/admin/activity-reports', 'ReportController@getActivities');
             Route::post('/admin/activity-reports', 'ReportController@storeActivity');
             Route::put('/admin/activity-reports/{id}', 'ReportController@updateActivity');
@@ -151,7 +151,7 @@ Route::group(['namespace' => 'Api'], function () {
             Route::delete('/admin/meetings/{id}', 'ReportController@deleteMeeting');
         });
 
-        Route::middleware('role:president,treasurer')->group(function () {
+        Route::middleware('role:president,treasurer,vice_treasurer')->group(function () {
             Route::get('/admin/finance', 'ReportController@getFinance');
             Route::post('/admin/finance', 'ReportController@storeTransaction');
             Route::put('/admin/finance/{id}', 'ReportController@updateTransaction');
