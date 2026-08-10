@@ -20,6 +20,12 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::group(['namespace' => 'Api'], function () {
+    // No DB query, no middleware - the cheapest possible request to keep the
+    // backend process warm on shared hosting via an external uptime pinger.
+    Route::get('/ping', function () {
+        return response()->json(['status' => 'ok']);
+    });
+
     Route::get('/csrf-cookie', function () {
         return response()->json(['message' => 'CSRF cookie set']);
     })->middleware('web');
