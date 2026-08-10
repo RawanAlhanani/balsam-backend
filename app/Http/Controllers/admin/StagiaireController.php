@@ -22,7 +22,10 @@ class StagiaireController extends Controller
             'etablissement' => 'required|string',
             'date_debut' => 'required|date',
             'date_fin' => 'required|date',
-            'cv' => 'required|file|mimes:pdf,doc,docx|max:2048'
+            'cv' => 'required|file|mimes:pdf,doc,docx|max:2048',
+            'cin' => 'required|string|unique:stagiaires,cin',
+            'niveau_etude' => 'required|string',
+            'region_id' => 'required|exists:regions,id',
         ]);
 
         if ($validator->fails()) {
@@ -39,13 +42,13 @@ class StagiaireController extends Controller
         $stagiaire = Stagiaire::create([
             'nom_stagiaire'    => $request->nom,
             'prenom_stagiaire' => $request->prenom,
-            'cin'              => 'STG-' . Str::upper(Str::random(4)), // توليد كود تلقائي لأن الحقل إجباري بجدولك
+            'cin'              => $request->cin,
             'email'            => $request->email,
             'telephone'        => $request->telephone,
-            'region_id'        => 1, // قيمة افتراضية حتى لا ترفض قاعدة البيانات الطلب
+            'region_id'        => $request->region_id,
             'etablissement'    => $request->etablissement,
             'specialite'       => $request->specialite,
-            'niveau_etude'     => 'جامعي', // قيمة افتراضية
+            'niveau_etude'     => $request->niveau_etude,
             'duree_stage'      => $duree,
             'cv_path'          => $cvPath,
             'nom_utilisateur'  => strstr($request->email, '@', true) . rand(10, 99), // اسم مستخدم افتراضي
