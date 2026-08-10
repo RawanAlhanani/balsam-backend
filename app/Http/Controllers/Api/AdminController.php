@@ -1066,6 +1066,110 @@ public function updateActivity(Request $request, $id)
         }
     }
 
+    // Fetch a tuteur+enfant pair for the admin edit form, keyed by enfant id
+    // (matches AdminTuteurs.jsx, which lists one row per child).
+    public function getTuteurForEdit($enfantId)
+    {
+        try {
+            $enfant = \App\Enfant::with('doctors')->findOrFail($enfantId);
+            $tuteur = \App\Tuteur::findOrFail($enfant->tuteur_id);
+
+            return response()->json([
+                'tuteur' => $tuteur,
+                'enfant' => $enfant,
+                'doctor_ids' => $enfant->doctors->pluck('id'),
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'الطفل أو ولي الأمر غير موجود.'], 404);
+        } catch (\Exception $e) {
+            Log::error('Error fetching tuteur/enfant for edit', ['enfant_id' => $enfantId, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء تحميل البيانات.'], 500);
+        }
+    }
+
+    public function updateTuteurEnfant(Request $request, $enfantId)
+    {
+        try {
+            $enfant = \App\Enfant::findOrFail($enfantId);
+            $tuteur = \App\Tuteur::findOrFail($enfant->tuteur_id);
+
+            $request->validate([
+                'nom_tuteur' => 'required|string|max:100',
+                'prenom_tuteur' => 'required|string|max:100',
+                'CIN' => 'required|string|max:20|unique:tuteurs,CIN,' . $tuteur->id,
+                'adresse' => 'required|string|max:255',
+                'region_id' => 'nullable|exists:regions,id',
+                'email_tuteur' => 'nullable|email|max:150',
+                'telephon' => 'nullable|string|max:20',
+                'whatsapp' => 'nullable|string|max:20',
+                'nom_enfant' => 'required|string|max:100',
+                'prenom_enfant' => 'required|string|max:100',
+                'date_naissance' => 'required|date|before:today',
+                'sexeEnfant' => 'required|in:1,2',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            ], [
+                'CIN.unique' => 'رقم البطاقة الوطنية مستخدم بالفعل.',
+                'date_naissance.before' => 'تاريخ الازدياد يجب أن يكون في الماضي.',
+            ]);
+
+            \Illuminate\Support\Facades\DB::transaction(function () use ($request, $tuteur, $enfant) {
+                $tuteur->update([
+                    'nom_tuteur' => $request->input('nom_tuteur'),
+                    'prenom_tuteur' => $request->input('prenom_tuteur'),
+                    'adresse' => $request->input('adresse'),
+                    'CIN' => $request->input('CIN'),
+                    'region_id' => $request->input('region_id'),
+                    'email_tuteur' => $request->input('email_tuteur'),
+                    'telephon' => $request->input('telephon'),
+                    'whatsapp' => $request->input('whatsapp'),
+                    'type_Tuteur' => $request->input('type_Tuteur'),
+                    'formation' => $request->input('formation'),
+                ]);
+
+                $enfant->update([
+                    'nom_enfant' => $request->input('nom_enfant'),
+                    'prenom_enfant' => $request->input('prenom_enfant'),
+                    'date_naissance' => $request->input('date_naissance'),
+                    'sexeEnfant' => $request->input('sexeEnfant'),
+                    'statut' => $request->input('statut'),
+                    'parole' => $request->input('parole'),
+                    'avs' => $request->input('avs'),
+                    'etude' => $request->input('etude'),
+                ]);
+
+                if ($request->hasFile('photo')) {
+                    $image = $request->file('photo');
+                    $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
+                    $image->storeAs('public/MesImages', $name);
+                    $enfant->photo = $name;
+                    $enfant->save();
+                }
+
+                $enfant->doctors()->sync($request->input('doctor', []));
+            });
+
+            Log::info('Admin updated tuteur/enfant', [
+                'tuteur_id' => $tuteur->id,
+                'enfant_id' => $enfant->id,
+                'updated_by' => auth()->user()->email ?? 'unknown',
+            ]);
+
+            return response()->json(['message' => 'تم تحديث البيانات بنجاح']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'الطفل أو ولي الأمر غير موجود.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Admin tuteur/enfant update validation failed', ['errors' => $e->errors(), 'enfant_id' => $enfantId]);
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating tuteur/enfant', [
+                'enfant_id' => $enfantId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['message' => 'خطأ أثناء تحديث البيانات.'], 500);
+        }
+    }
+
     // Regions
     public function getRegions() {
         return response()->json(Region::all());

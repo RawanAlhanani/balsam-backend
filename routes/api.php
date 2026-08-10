@@ -64,6 +64,8 @@ Route::group(['namespace' => 'Api'], function () {
         Route::middleware('role:president,vice_president,secretary,vice_secretary,treasurer,vice_treasurer')->group(function () {
             Route::get('/admin/tuteurs', 'PublicController@getAdminTuteurs');
             Route::delete('/admin/tuteurs/{id}', 'AdminController@deleteTuteur');
+            Route::get('/admin/tuteur-enfant/{enfantId}', 'AdminController@getTuteurForEdit');
+            Route::put('/admin/tuteur-enfant/{enfantId}', 'AdminController@updateTuteurEnfant');
             Route::get('/admin/stats', 'AdminController@getStats');
 
             // Admin Activities routes
