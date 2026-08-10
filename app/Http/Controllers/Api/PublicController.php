@@ -54,7 +54,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching home data.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل بيانات الصفحة الرئيسية.'], 500);
         }
     }
 
@@ -68,7 +68,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching about data.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل بيانات من نحن.'], 500);
         }
     }
 
@@ -82,7 +82,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching projects.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل المشاريع.'], 500);
         }
     }
 
@@ -93,14 +93,14 @@ class PublicController extends Controller
             return response()->json($project);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Project not found', ['id' => $id]);
-            return response()->json(['message' => 'Project not found.'], 404);
+            return response()->json(['message' => 'المشروع غير موجود.'], 404);
         } catch (\Exception $e) {
             Log::error('Error fetching project', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching project.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل المشروع.'], 500);
         }
     }
 
@@ -115,7 +115,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching news.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل الأخبار.'], 500);
         }
     }
 
@@ -130,14 +130,14 @@ class PublicController extends Controller
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('News not found', ['id' => $id]);
-            return response()->json(['message' => 'News not found.'], 404);
+            return response()->json(['message' => 'الخبر غير موجود.'], 404);
         } catch (\Exception $e) {
             Log::error('Error fetching news', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching news.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل الأخبار.'], 500);
         }
     }
 
@@ -151,7 +151,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching activities.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل الأنشطة.'], 500);
         }
     }
 
@@ -161,7 +161,7 @@ class PublicController extends Controller
             $activity = Activite::where('id', $id)->with('typeactivite')->first();
             if (!$activity) {
                 Log::warning('Activity not found', ['id' => $id]);
-                return response()->json(['message' => 'Activity not found.'], 404);
+                return response()->json(['message' => 'النشاط غير موجود.'], 404);
             }
             $latest_activities = Activite::where('id', '!=', $id)->orderBy('updated_at', 'desc')->take(4)->get();
             return response()->json([
@@ -174,7 +174,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching activity.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل النشاط.'], 500);
         }
     }
 
@@ -188,7 +188,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching partners.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل الشركاء.'], 500);
         }
     }
 
@@ -203,7 +203,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching photos.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل الصور.'], 500);
         }
     }
 
@@ -230,7 +230,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching autism pages.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل صفحات التوحد.'], 500);
         }
     }
 
@@ -246,14 +246,14 @@ class PublicController extends Controller
             return response()->json($data);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Autism page not found', ['id' => $id]);
-            return response()->json(['message' => 'Autism page not found.'], 404);
+            return response()->json(['message' => 'الصفحة غير موجودة.'], 404);
         } catch (\Exception $e) {
             Log::error('Error fetching autism page', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching autism page.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل الصفحة.'], 500);
         }
     }
 
@@ -271,7 +271,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching registration data.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل بيانات التسجيل.'], 500);
         }
     }
 
@@ -288,7 +288,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error generating PDF.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء إنشاء ملف PDF.'], 500);
         }
     }
 
@@ -302,7 +302,7 @@ class PublicController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error fetching tuteurs.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحميل قائمة أولياء الأمور.'], 500);
         }
     }
 

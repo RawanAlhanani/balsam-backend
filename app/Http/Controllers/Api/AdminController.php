@@ -833,7 +833,7 @@ public function updateActivity(Request $request, $id)
             if ($type === 'about') $page = \App\Aboutus::findOrFail($id);
             elseif ($type === 'autism') $page = \App\PageAutisme::findOrFail($id);
             elseif ($type === 'projects') $page = \App\Projet::findOrFail($id);
-            else return response()->json(['message' => 'Invalid static page type.'], 400);
+            else return response()->json(['message' => 'نوع الصفحة غير صالح.'], 400);
 
             $page->titre = $request->titre;
 
@@ -869,7 +869,7 @@ public function updateActivity(Request $request, $id)
 
             $page->save();
 
-            return response()->json(['message' => 'Static page updated successfully.', 'page' => $page], 200);
+            return response()->json(['message' => 'تم تحديث الصفحة بنجاح.', 'page' => $page], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Static page not found for update', ['type' => $type, 'id' => $id]);
             return response()->json(['message' => 'الصفحة غير موجودة.'], 404);

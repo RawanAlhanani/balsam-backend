@@ -42,16 +42,16 @@ class ReportController extends Controller
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Success', 'data' => $activity]);
+            return response()->json(['message' => 'تم بنجاح', 'data' => $activity]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Activity report validation failed', ['errors' => $e->errors()]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من صحة البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error creating activity report', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error creating activity report.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء إنشاء تقرير النشاط.'], 500);
         }
     }
 
@@ -65,17 +65,17 @@ class ReportController extends Controller
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف بنجاح']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Activity report not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'Activity report not found.'], 404);
+            return response()->json(['message' => 'تقرير النشاط غير موجود.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting activity report', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting activity report.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء حذف تقرير النشاط.'], 500);
         }
     }
 
@@ -108,16 +108,16 @@ class ReportController extends Controller
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Success', 'data' => $meeting]);
+            return response()->json(['message' => 'تم بنجاح', 'data' => $meeting]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Meeting report validation failed', ['errors' => $e->errors()]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من صحة البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error creating meeting report', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error creating meeting report.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء إنشاء محضر الاجتماع.'], 500);
         }
     }
 
@@ -132,17 +132,17 @@ class ReportController extends Controller
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف بنجاح']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Meeting report not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'Meeting report not found.'], 404);
+            return response()->json(['message' => 'محضر الاجتماع غير موجود.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting meeting report', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting meeting report.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء حذف محضر الاجتماع.'], 500);
         }
     }
 
@@ -201,16 +201,16 @@ class ReportController extends Controller
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Success', 'data' => $transaction]);
+            return response()->json(['message' => 'تم بنجاح', 'data' => $transaction]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Transaction validation failed', ['errors' => $e->errors()]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من صحة البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error creating transaction', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error creating transaction.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء إنشاء المعاملة المالية.'], 500);
         }
     }
 
@@ -234,20 +234,20 @@ class ReportController extends Controller
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Updated', 'data' => $transaction]);
+            return response()->json(['message' => 'تم التحديث بنجاح', 'data' => $transaction]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Transaction not found for update', ['id' => $id]);
-            return response()->json(['message' => 'Transaction not found.'], 404);
+            return response()->json(['message' => 'المعاملة المالية غير موجودة.'], 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Transaction update validation failed', ['errors' => $e->errors(), 'id' => $id]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من صحة البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error updating transaction', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error updating transaction.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحديث المعاملة المالية.'], 500);
         }
     }
 
@@ -263,17 +263,17 @@ class ReportController extends Controller
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف بنجاح']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Transaction not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'Transaction not found.'], 404);
+            return response()->json(['message' => 'المعاملة المالية غير موجودة.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting transaction', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting transaction.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء حذف المعاملة المالية.'], 500);
         }
     }
 
@@ -300,13 +300,13 @@ class ReportController extends Controller
             return response()->json($cat);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Category creation validation failed', ['errors' => $e->errors()]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من صحة البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error creating category', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error creating category.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء إنشاء الفئة.'], 500);
         }
     }
 
@@ -321,17 +321,17 @@ class ReportController extends Controller
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Deleted']);
+            return response()->json(['message' => 'تم الحذف بنجاح']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Category not found for deletion', ['id' => $id]);
-            return response()->json(['message' => 'Category not found.'], 404);
+            return response()->json(['message' => 'الفئة غير موجودة.'], 404);
         } catch (\Exception $e) {
             Log::error('Error deleting category', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error deleting category.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء حذف الفئة.'], 500);
         }
     }
 
@@ -358,20 +358,20 @@ class ReportController extends Controller
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return response()->json(['message' => 'Category updated successfully.', 'category' => $category]);
+            return response()->json(['message' => 'تم تحديث الفئة بنجاح.', 'category' => $category]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Category not found for update', ['id' => $id]);
-            return response()->json(['message' => 'Category not found.'], 404);
+            return response()->json(['message' => 'الفئة غير موجودة.'], 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Category update validation failed', ['errors' => $e->errors(), 'id' => $id]);
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json(['message' => 'فشل التحقق من صحة البيانات', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error updating category', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['message' => 'Error updating category.'], 500);
+            return response()->json(['message' => 'حدث خطأ أثناء تحديث الفئة.'], 500);
         }
     }
 }
