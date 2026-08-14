@@ -161,7 +161,13 @@ class ReportController extends Controller
                 'admin_user' => auth()->user()->email ?? 'unknown'
             ]);
 
-            return $pdf->download('محضر-اجتماع-' . $meeting->date . '.pdf');
+            // barryvdh/laravel-dompdf's download() interpolates the filename
+            // directly into the Content-Disposition header with no
+            // sanitization - an Arabic filename means raw UTF-8 bytes in an
+            // HTTP header, which is invalid and crashes. Keep it ASCII; the
+            // frontend already gives the downloaded file a proper Arabic
+            // name via the <a download="..."> attribute.
+            return $pdf->download('meeting-report-' . $meeting->date . '.pdf');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::warning('Meeting report not found for PDF export', ['id' => $id]);
             return response()->json(['message' => 'محضر الاجتماع غير موجود.'], 404);
