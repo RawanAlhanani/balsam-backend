@@ -103,11 +103,17 @@ class ArabicShaper
             $connectsPrev = self::joinsNext($codepoints[$i - 1] ?? null);
             $connectsNext = $isDual && self::joinsPrev($codepoints[$i + 1] ?? null);
 
-            if ($connectsPrev && $connectsNext) {
+            // A neighbor extending a connection doesn't guarantee THIS
+            // letter's form table has that slot - hamza, for instance, is
+            // isolated-only ([0xFE80]) even though a dual-joining letter
+            // right before it (e.g. "بأ") reports connectsPrev = true.
+            // Fall back to the isolated form whenever the specific slot is
+            // missing instead of indexing straight into it.
+            if ($connectsPrev && $connectsNext && isset($form[2])) {
                 $glyph = $form[2]; // medial
-            } elseif ($connectsPrev) {
+            } elseif ($connectsPrev && isset($form[3])) {
                 $glyph = $form[3]; // final
-            } elseif ($connectsNext) {
+            } elseif ($connectsNext && isset($form[1])) {
                 $glyph = $form[1]; // initial
             } else {
                 $glyph = $form[0]; // isolated
