@@ -1,8 +1,18 @@
+@php
+    // dompdf doesn't shape Arabic text (see App\Support\ArabicShaper) - every
+    // string that contains Arabic, static labels included, must be passed
+    // through ar() below or it renders as disconnected isolated letters.
+    if (!function_exists('ar')) {
+        function ar($text) {
+            return \App\Support\ArabicShaper::reshape((string) $text);
+        }
+    }
+@endphp
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
 <meta charset="utf-8" />
-<title>محضر اجتماع</title>
+<title>{{ ar('تقرير اجتماع') }}</title>
 <style>
     * { font-family: DejaVu Sans, sans-serif; }
     body { margin: 0; padding: 0; }
@@ -35,51 +45,51 @@
 
     <div class="content">
         <div class="header-title">
-            <div class="title">محضر اجتماع الجمعية</div>
+            <div class="title">{{ ar('محضر اجتماع الجمعية') }}</div>
         </div>
 
         <table class="info-table">
             <tr>
-                <td><span class="info-label">التاريخ:</span> {{ $meeting->date }}</td>
-                <td><span class="info-label">المكان:</span> {{ $meeting->location }}</td>
+                <td><span class="info-label">{{ ar('التاريخ:') }}</span> {{ ar($meeting->date) }}</td>
+                <td><span class="info-label">{{ ar('المكان:') }}</span> {{ ar($meeting->location) }}</td>
             </tr>
             <tr>
-                <td><span class="info-label">من:</span> {{ $meeting->start_time }}</td>
-                <td><span class="info-label">إلى:</span> {{ $meeting->end_time }}</td>
+                <td><span class="info-label">{{ ar('من:') }}</span> {{ ar($meeting->start_time) }}</td>
+                <td><span class="info-label">{{ ar('إلى:') }}</span> {{ ar($meeting->end_time) }}</td>
             </tr>
         </table>
 
         <div class="section">
-            <div class="section-title">الحضور</div>
-            <div class="section-content">{{ $meeting->attendees ?: '---' }}</div>
+            <div class="section-title">{{ ar('الحضور') }}</div>
+            <div class="section-content">{{ ar($meeting->attendees ?: '---') }}</div>
         </div>
 
         <div class="section">
-            <div class="section-title">جدول الأعمال</div>
-            <div class="section-content">{{ $meeting->agenda ?: '---' }}</div>
+            <div class="section-title">{{ ar('جدول الأعمال') }}</div>
+            <div class="section-content">{{ ar($meeting->agenda ?: '---') }}</div>
         </div>
 
         <div class="section">
-            <div class="section-title">مداولات الاجتماع</div>
-            <div class="section-content">{{ $meeting->discussions ?: '---' }}</div>
+            <div class="section-title">{{ ar('مداولات الاجتماع') }}</div>
+            <div class="section-content">{{ ar($meeting->discussions ?: '---') }}</div>
         </div>
 
         <div class="section">
-            <div class="section-title">القرارات المتخذة</div>
-            <div class="section-content">{{ $meeting->decisions ?: '---' }}</div>
+            <div class="section-title">{{ ar('القرارات المتخذة') }}</div>
+            <div class="section-content">{{ ar($meeting->decisions ?: '---') }}</div>
         </div>
 
         @if($meeting->next_meeting_date)
         <div class="section">
-            <div class="section-title">موعد الاجتماع المقبل</div>
-            <div class="section-content">{{ $meeting->next_meeting_date }}</div>
+            <div class="section-title">{{ ar('موعد الاجتماع المقبل') }}</div>
+            <div class="section-content">{{ ar($meeting->next_meeting_date) }}</div>
         </div>
         @endif
 
         <table class="sign-table">
             <tr>
-                <td>توقيع الكاتب العام</td>
-                <td>توقيع رئيس الجمعية</td>
+                <td>{{ ar('توقيع الكاتب العام') }}</td>
+                <td>{{ ar('توقيع رئيس الجمعية') }}</td>
             </tr>
         </table>
     </div>
