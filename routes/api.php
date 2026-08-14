@@ -157,7 +157,6 @@ Route::group(['namespace' => 'Api'], function () {
             Route::get('/admin/meetings', 'ReportController@getMeetings');
             Route::post('/admin/meetings', 'ReportController@storeMeeting');
             Route::delete('/admin/meetings/{id}', 'ReportController@deleteMeeting');
-            Route::get('/admin/meetings/{id}/print', 'ReportController@printMeeting');
         });
 
         Route::middleware('role:president,treasurer,vice_treasurer')->group(function () {
