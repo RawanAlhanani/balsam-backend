@@ -146,6 +146,35 @@ class ReportController extends Controller
         }
     }
 
+    // Generated server-side via dompdf instead of the browser's print dialog -
+    // the previous hidden-iframe + window.print() approach was unreliable on
+    // mobile browsers (iOS Safari in particular doesn't print iframe content
+    // reliably) and had a race condition where the letterhead image/font
+    // could still be loading when print() fired.
+    public function printMeeting($id) {
+        try {
+            $meeting = MeetingReport::findOrFail($id);
+            $pdf = \PDF::loadView('admin_pdf.meeting_report', ['meeting' => $meeting]);
+
+            Log::info('Meeting report PDF generated', [
+                'report_id' => $id,
+                'admin_user' => auth()->user()->email ?? 'unknown'
+            ]);
+
+            return $pdf->download('محضر-اجتماع-' . $meeting->date . '.pdf');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Meeting report not found for PDF export', ['id' => $id]);
+            return response()->json(['message' => 'محضر الاجتماع غير موجود.'], 404);
+        } catch (\Exception $e) {
+            Log::error('Error generating meeting report PDF', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'حدث خطأ أثناء إنشاء ملف PDF.'], 500);
+        }
+    }
+
     // Finance
     public function getFinance(Request $request) {
         $month = $request->month;
