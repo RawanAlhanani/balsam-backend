@@ -373,8 +373,13 @@ class AuthController extends Controller
             $request->validate([
                 "nom_tuteur"=>"required|string|max:100",
                 "prenom_tuteur"=>"required|string|max:100",
-                "CIN"=>"required|string|max:20|unique:tuteurs,CIN," . $tuteur->id,
-                "adresse"=>"required|string|max:255",
+                // nullable, not required: volunteer/admin_request accounts
+                // never collect CIN/adresse at registration (see
+                // AuthController::register's beneficiary-only branch), so
+                // requiring them here blocked those accounts from saving
+                // any profile change at all.
+                "CIN"=>"nullable|string|max:20|unique:tuteurs,CIN," . $tuteur->id,
+                "adresse"=>"nullable|string|max:255",
                 "nom_utilisateur"=>"required|string|min:3|max:50|unique:tuteurs,nom_utilisateur," . $tuteur->id,
                 "email_tuteur"=>"nullable|email|max:150",
                 "telephon"=>"nullable|string|max:20",
@@ -384,15 +389,24 @@ class AuthController extends Controller
                 "nom_enfant"=>"nullable|string|max:100",
                 "prenom_enfant"=>"nullable|string|max:100",
                 "date_naissance"=>"nullable|date|before:today",
-                "sexeEnfant"=>"nullable|in:male,female",
+                // "1"/"2" (female/male), matching every form that submits this
+                // field (Register.jsx, EditProfile.jsx, EditTuteur.jsx) and
+                // AdminController's equivalent rule - "male"/"female" here was
+                // simply wrong and rejected every real submission.
+                "sexeEnfant"=>"nullable|in:1,2",
                 "photo"=>"nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048",
             ]);
 
             $updateData = [
                 'nom_tuteur' => $request->input('nom_tuteur'),
                 'prenom_tuteur' => $request->input('prenom_tuteur'),
-                'adresse' => $request->input('adresse'),
-                'CIN' => $request->input('CIN'),
+                // tuteurs.adresse/CIN are NOT NULL with no default, but
+                // volunteer/admin_request accounts never collect them (they're
+                // stored as '' at registration) and the ConvertEmptyStringsToNull
+                // middleware turns a blank submitted value into null - coalesce
+                // back to '' so the update doesn't violate the column constraint.
+                'adresse' => $request->input('adresse') ?? '',
+                'CIN' => $request->input('CIN') ?? '',
                 'region_id' => $request->input('region_id'),
                 'email_tuteur' => $request->input('email_tuteur'),
                 'telephon' => $request->input('telephon'),
