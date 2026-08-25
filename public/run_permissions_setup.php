@@ -33,7 +33,7 @@ try {
     
     foreach ($migrations as $migration) {
         echo "Running migration: $migration\n";
-        $exitCode = \Illuminate\Support\Facades\Artisan::call('migrate:force', [
+        $exitCode = \Illuminate\Support\Facades\Artisan::call('migrate', [
             '--path' => 'database/migrations/' . $migration . '.php',
             '--force' => true,
         ]);
