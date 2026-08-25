@@ -88,6 +88,7 @@
         </li>
 
         
+        <!-- إعدادات -->
         <li class=" nav-item"><a href="#"><i class="la la-home"></i><span class="menu-title" data-i18n="nav.dash.main">إعدادات</span></a>
           <ul class="menu-content">
 

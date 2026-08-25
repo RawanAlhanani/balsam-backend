@@ -55,6 +55,46 @@ class ReportController extends Controller
         }
     }
 
+    public function updateActivity(Request $request, $id) {
+        try {
+            $data = $request->validate([
+                'date' => 'required|date|before_or_equal:today',
+                'location' => 'nullable|string|max:255',
+                'activity_type' => 'nullable|string|max:100',
+                'beneficiaries' => 'nullable|string|max:500',
+                'moderator' => 'nullable|string|max:255',
+                'presentation_title' => 'nullable|string|max:255',
+                'start_time' => 'nullable|date_format:H:i',
+                'end_time' => 'nullable|date_format:H:i|after:start_time',
+                'summary' => 'nullable|string|min:10',
+            ]);
+
+            $activity = ActivityReport::findOrFail($id);
+            $activity->update($data);
+
+            Log::info('Activity report updated', [
+                'report_id' => $id,
+                'date' => $activity->date,
+                'admin_user' => auth()->user()->email ?? 'unknown'
+            ]);
+
+            return response()->json(['message' => 'تم التحديث بنجاح', 'data' => $activity]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Activity report not found for update', ['id' => $id]);
+            return response()->json(['message' => 'تقرير النشاط غير موجود.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Activity report update validation failed', ['errors' => $e->errors(), 'id' => $id]);
+            return response()->json(['message' => 'فشل التحقق من صحة البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating activity report', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'حدث خطأ أثناء تحديث تقرير النشاط.'], 500);
+        }
+    }
+
     public function deleteActivity($id) {
         try {
             $activity = ActivityReport::findOrFail($id);
@@ -118,6 +158,48 @@ class ReportController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             return response()->json(['message' => 'حدث خطأ أثناء إنشاء محضر الاجتماع.'], 500);
+        }
+    }
+
+    public function updateMeeting(Request $request, $id) {
+        try {
+            $data = $request->validate([
+                'date' => 'required|date|before_or_equal:today',
+                'location' => 'required|string|max:255',
+                'start_time' => 'required|date_format:H:i',
+                'end_time' => 'required|date_format:H:i|after:start_time',
+                'attendees' => 'nullable|string|max:500',
+                'absentees' => 'nullable|string|max:500',
+                'agenda' => 'nullable|string|min:10',
+                'discussions' => 'nullable|string|min:10',
+                'decisions' => 'nullable|string|min:10',
+                'next_meeting_date' => 'nullable|date|after:date',
+            ]);
+
+            $meeting = MeetingReport::findOrFail($id);
+            $meeting->update($data);
+
+            Log::info('Meeting report updated', [
+                'report_id' => $id,
+                'date' => $meeting->date,
+                'location' => $meeting->location,
+                'admin_user' => auth()->user()->email ?? 'unknown'
+            ]);
+
+            return response()->json(['message' => 'تم التحديث بنجاح', 'data' => $meeting]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Meeting report not found for update', ['id' => $id]);
+            return response()->json(['message' => 'محضر الاجتماع غير موجود.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Meeting report update validation failed', ['errors' => $e->errors(), 'id' => $id]);
+            return response()->json(['message' => 'فشل التحقق من صحة البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating meeting report', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'حدث خطأ أثناء تحديث محضر الاجتماع.'], 500);
         }
     }
 

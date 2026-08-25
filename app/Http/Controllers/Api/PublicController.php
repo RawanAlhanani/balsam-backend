@@ -278,6 +278,14 @@ class PublicController extends Controller
     public function genererPDF($activite_id, $tuteur_id)
     {
         try {
+            $user = request()->user();
+
+            if (!($user instanceof \App\Tuteur) || (int) $user->id !== (int) $tuteur_id) {
+                return response()->json([
+                    'message' => 'غير مسموح لك بإنشاء ملف PDF لهذا الحساب.'
+                ], 403);
+            }
+
             // Reuse existing logic from Frontend\PagesController
             $pagesController = new \App\Http\Controllers\Frontend\PagesController();
             return $pagesController->genererPDF($activite_id, $tuteur_id);

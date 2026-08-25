@@ -76,7 +76,7 @@ Route::get('nosPhotos', [
 /*********************Backend*****************************/
 
 Route::get('tuteur', [
-	'uses' => 'Backend\TuteurController@index',   /*     <---------*/
+	'uses' => 'admin\TuteurController@getTuteurs',   /*     <---------*/
 	'as' => 'Tuteur'
 ]);
 
@@ -453,15 +453,6 @@ Route::name('backend')->prefix('auth')->namespace('Backend')->group(function(){
 });
 */
 
-Route::get('backend/auth/login_form', [
-    'uses' =>'Backend\LoginController@LoginForm',
-    'as' => 'LoginForm'
-]);
-
-Route::post('backend/auth/login_form', [
-    'uses' =>'Backend\LoginController@traitement',
-    'as' => 'Traitement'
-]);
 
 
 
@@ -658,9 +649,6 @@ Route::post('admin/posteditProjet', [
 
 // supprimer 
 Route::get('admin/deleteProjet/{id}', [
-	'uses' => 'admin\ProjetController@supprimerProjet',
-	'as' => 'delProjet'
+    'uses' => 'admin\ProjetController@supprimerProjet',
+    'as' => 'delProjet'
 ]);
-
-
-

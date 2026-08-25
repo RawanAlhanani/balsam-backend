@@ -974,11 +974,10 @@ public function updateActivity(Request $request, $id)
                 'role.required' => 'الدور مطلوب.',
             ]);
 
-            // Guard against a president locking themselves out by changing
-            // their own role away from president through this form.
-            if ($admin->id === auth()->id() && $admin->role === 'president' && $request->role !== 'president') {
+            // Presidents cannot demote themselves or another president.
+            if ($admin->role === 'president' && $request->role !== 'president') {
                 return response()->json([
-                    'message' => 'لا يمكنك تغيير صفتك الخاصة كرئيس لتفادي فقدان الوصول للوحة التحكم.'
+                    'message' => 'لا يمكن تغيير صفة حساب رئيس إلى دور آخر.'
                 ], 422);
             }
 
@@ -1017,6 +1016,19 @@ public function updateActivity(Request $request, $id)
     public function deleteAdmin($id) {
         try {
             $admin = \App\LoginAdmin::findOrFail($id);
+
+            if ((int) $admin->id === (int) auth()->id()) {
+                return response()->json([
+                    'message' => 'لا يمكنك حذف حسابك الحالي.'
+                ], 422);
+            }
+
+            if ($admin->role === 'president') {
+                return response()->json([
+                    'message' => 'لا يمكن حذف حساب رئيس.'
+                ], 422);
+            }
+
             $admin->delete();
 
             Log::info('Admin account deleted', [

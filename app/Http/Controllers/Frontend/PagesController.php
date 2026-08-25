@@ -86,6 +86,24 @@ class PagesController extends Controller
 // generer PDF
     public function genererPDF($activite_id, $tuteur_id = -1){
     	if( $tuteur_id != -1){
+			$authenticatedUser = request()->user();
+			$sessionTuteurId = session('tuteur_id');
+			$isAuthenticatedTuteur = $authenticatedUser instanceof Tuteur
+				&& (int) $authenticatedUser->id === (int) $tuteur_id;
+			$isAuthenticatedSession = !$authenticatedUser
+				&& $sessionTuteurId !== null
+				&& (int) $sessionTuteurId === (int) $tuteur_id;
+
+			if (!$isAuthenticatedTuteur && !$isAuthenticatedSession) {
+				if (request()->expectsJson()) {
+					return response()->json([
+						'message' => 'غير مسموح لك بإنشاء ملف PDF لهذا الحساب.'
+					], 403);
+				}
+
+				return redirect()->route('Login');
+			}
+
     		$tuteur = Tuteur::find($tuteur_id);
     		$activite = Activite::where('id', $activite_id)->with('typeactivite')->first();
             $enfant = Enfant::where('tuteur_id', $tuteur->id)->first();

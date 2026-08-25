@@ -57,7 +57,7 @@ Route::group(['namespace' => 'Api'], function () {
     Route::get('/autisme-pages', 'PublicController@getAutismePages');
     Route::get('/autisme-pages/{id}', 'PublicController@getAutismePage');
     Route::get('/registration-data', 'PublicController@getRegistrationData');
-    Route::get('/generer/{id_activite}/{id_tuteur}', 'PublicController@genererPDF');
+    Route::get('/generer/{id_activite}/{id_tuteur}', 'PublicController@genererPDF')->middleware('auth:sanctum');
     Route::post('/contact', 'PublicController@submitContact')->middleware('throttle:20,1');
     Route::get('/team', 'PublicController@getTeam');
     Route::get('/site-settings', 'PublicController@getSiteSettings');
@@ -68,76 +68,83 @@ Route::group(['namespace' => 'Api'], function () {
         // a self-registered Tuteur (parent/volunteer/admin_request) has no `role` and is
         // rejected by CheckRole regardless of which role is passed here.
         Route::middleware('role:president,vice_president,secretary,vice_secretary,treasurer,vice_treasurer')->group(function () {
-            Route::get('/admin/tuteurs', 'PublicController@getAdminTuteurs');
-            Route::delete('/admin/tuteurs/{id}', 'AdminController@deleteTuteur');
-            Route::get('/admin/tuteur-enfant/{enfantId}', 'AdminController@getTuteurForEdit');
-            Route::put('/admin/tuteur-enfant/{enfantId}', 'AdminController@updateTuteurEnfant');
-            Route::get('/admin/stats', 'AdminController@getStats');
+            Route::middleware('permission:view_tuteurs')->get('/admin/tuteurs', 'PublicController@getAdminTuteurs');
+            Route::middleware('permission:delete_tuteurs')->delete('/admin/tuteurs/{id}', 'AdminController@deleteTuteur');
+            Route::middleware('permission:edit_tuteurs')->get('/admin/tuteur-enfant/{enfantId}', 'AdminController@getTuteurForEdit');
+            Route::middleware('permission:edit_tuteurs')->put('/admin/tuteur-enfant/{enfantId}', 'AdminController@updateTuteurEnfant');
+            Route::middleware('permission:view_stats')->get('/admin/stats', 'AdminController@getStats');
 
             // Admin Activities routes
-            Route::get('/admin/activities', 'AdminController@getActivities'); // Added this line for admin GET
-            Route::post('/admin/activities', 'AdminController@storeActivity');
-            Route::put('/admin/activities/{id}', 'AdminController@updateActivity');
-            Route::delete('/admin/activities/{id}', 'AdminController@deleteActivity');
-             Route::get('/admin/activities/{id}', 'AdminController@showActivity');
-                // For News
+            Route::middleware('permission:view_activities')->get('/admin/activities', 'AdminController@getActivities');
+            Route::middleware('permission:create_activities')->post('/admin/activities', 'AdminController@storeActivity');
+            Route::middleware('permission:edit_activities')->put('/admin/activities/{id}', 'AdminController@updateActivity');
+            Route::middleware('permission:delete_activities')->delete('/admin/activities/{id}', 'AdminController@deleteActivity');
+            Route::middleware('permission:view_activities')->get('/admin/activities/{id}', 'AdminController@showActivity');
+            // For News
+            Route::middleware('permission:view_news')->get('/admin/news', 'AdminController@getNews');
+            Route::middleware('permission:create_news')->post('/admin/news', 'AdminController@storeNews');
+            Route::middleware('permission:edit_news')->put('/admin/news/{id}', 'AdminController@updateNews');
+            Route::middleware('permission:delete_news')->delete('/admin/news/{id}', 'AdminController@deleteNews');
+            Route::middleware('permission:view_news')->get('/admin/news/{id}', 'AdminController@showNews');
 
+            // Partners
+            Route::middleware('permission:view_partners')->get('/admin/partners', 'AdminController@getPartners');
+            Route::middleware('permission:create_partners')->post('/admin/partners', 'AdminController@storePartner');
+            Route::middleware('permission:edit_partners')->put('/admin/partners/{id}', 'AdminController@updatePartner');
+            Route::middleware('permission:delete_partners')->delete('/admin/partners/{id}', 'AdminController@deletePartner');
 
-            Route::get('/admin/news', 'AdminController@getNews');
-            Route::post('/admin/news', 'AdminController@storeNews');
-            Route::put('/admin/news/{id}', 'AdminController@updateNews');
-            Route::delete('/admin/news/{id}', 'AdminController@deleteNews');
-              Route::get('/admin/news/{id}', 'AdminController@showNews');
+            // Regions
+            Route::middleware('permission:view_regions')->get('/admin/regions', 'AdminController@getRegions');
+            Route::middleware('permission:create_regions')->post('/admin/regions', 'AdminController@storeRegion');
+            Route::middleware('permission:edit_regions')->put('/admin/regions/{id}', 'AdminController@updateRegion');
+            Route::middleware('permission:delete_regions')->delete('/admin/regions/{id}', 'AdminController@deleteRegion');
 
-            Route::get('/admin/partners', 'AdminController@getPartners');
-            Route::post('/admin/partners', 'AdminController@storePartner');
-            Route::put('/admin/partners/{id}', 'AdminController@updatePartner');
-            Route::delete('/admin/partners/{id}', 'AdminController@deletePartner');
+            // Doctors
+            Route::middleware('permission:view_doctors')->get('/admin/doctors', 'AdminController@getDoctors');
+            Route::middleware('permission:create_doctors')->post('/admin/doctors', 'AdminController@storeDoctor');
+            Route::middleware('permission:edit_doctors')->put('/admin/doctors/{id}', 'AdminController@updateDoctor');
+            Route::middleware('permission:delete_doctors')->delete('/admin/doctors/{id}', 'AdminController@deleteDoctor');
 
-            Route::get('/admin/regions', 'AdminController@getRegions');
-            Route::post('/admin/regions', 'AdminController@storeRegion');
-            Route::put('/admin/regions/{id}', 'AdminController@updateRegion');
-            Route::delete('/admin/regions/{id}', 'AdminController@deleteRegion');
-            Route::get('/admin/doctors', 'AdminController@getDoctors');
-            Route::post('/admin/doctors', 'AdminController@storeDoctor');
-            Route::put('/admin/doctors/{id}', 'AdminController@updateDoctor');
-            Route::delete('/admin/doctors/{id}', 'AdminController@deleteDoctor');
-            Route::get('/admin/types', 'AdminController@getTypes');
-            Route::post('/admin/types', 'AdminController@storeType');
-            Route::put('/admin/types/{id}', 'AdminController@updateType');
-            Route::delete('/admin/types/{id}', 'AdminController@deleteType');
+            // Types
+            Route::middleware('permission:view_types')->get('/admin/types', 'AdminController@getTypes');
+            Route::middleware('permission:create_types')->post('/admin/types', 'AdminController@storeType');
+            Route::middleware('permission:edit_types')->put('/admin/types/{id}', 'AdminController@updateType');
+            Route::middleware('permission:delete_types')->delete('/admin/types/{id}', 'AdminController@deleteType');
 
-            Route::get('/admin/sliders', 'AdminController@getSliders');
-            Route::post('/admin/sliders', 'AdminController@storeSlider');
-            Route::put('/admin/sliders/{id}', 'AdminController@updateSlider'); // Added this line
-            Route::delete('/admin/sliders/{id}', 'AdminController@deleteSlider');
+            // Sliders
+            Route::middleware('permission:view_sliders')->get('/admin/sliders', 'AdminController@getSliders');
+            Route::middleware('permission:create_sliders')->post('/admin/sliders', 'AdminController@storeSlider');
+            Route::middleware('permission:edit_sliders')->put('/admin/sliders/{id}', 'AdminController@updateSlider');
+            Route::middleware('permission:delete_sliders')->delete('/admin/sliders/{id}', 'AdminController@deleteSlider');
 
-            Route::get('/admin/gallery', 'AdminController@getGallery');
-            Route::post('/admin/gallery', 'AdminController@storeGallery');
-            Route::put('/admin/gallery/{id}', 'AdminController@updateGallery'); // Added this line
-            Route::delete('/admin/gallery/{id}', 'AdminController@deleteGallery');
+            // Gallery
+            Route::middleware('permission:view_gallery')->get('/admin/gallery', 'AdminController@getGallery');
+            Route::middleware('permission:create_gallery')->post('/admin/gallery', 'AdminController@storeGallery');
+            Route::middleware('permission:edit_gallery')->put('/admin/gallery/{id}', 'AdminController@updateGallery');
+            Route::middleware('permission:delete_gallery')->delete('/admin/gallery/{id}', 'AdminController@deleteGallery');
 
+            // Static Pages
+            Route::middleware('permission:view_static_pages')->get('/admin/static-pages', 'AdminController@getStaticPages');
+            Route::middleware('permission:create_static_pages')->post('/admin/static-pages', 'AdminController@storeStaticPage');
+            Route::middleware('permission:edit_static_pages')->put('/admin/static-pages/{type}/{id}', 'AdminController@updateStaticPage');
+            Route::middleware('permission:view_static_pages')->get('/admin/static-pages/{type}/{id}', 'AdminController@getSingleStaticPage');
+            Route::middleware('permission:delete_static_pages')->delete('/admin/static-pages/{type}/{id}', 'AdminController@deleteStaticPage');
 
-            Route::get('/admin/static-pages', 'AdminController@getStaticPages');
-            Route::post('/admin/static-pages', 'AdminController@storeStaticPage');
-            Route::put('/admin/static-pages/{type}/{id}', 'AdminController@updateStaticPage');
-            Route::get('/admin/static-pages/{type}/{id}', 'AdminController@getSingleStaticPage');
-            Route::delete('/admin/static-pages/{type}/{id}', 'AdminController@deleteStaticPage');
+            // Stagiaires
+            Route::middleware('permission:view_stagiaires')->get('/admin/stagiaires', '\App\Http\Controllers\admin\StagiaireController@index');
+            Route::middleware('permission:delete_stagiaires')->delete('/admin/stagiaires/{id}', '\App\Http\Controllers\admin\StagiaireController@destroy');
 
-            // ADDED: Route for Admin Stagiaires
-            Route::get('/admin/stagiaires', '\App\Http\Controllers\admin\StagiaireController@index');
+            // Volunteers
+            Route::middleware('permission:view_volunteers')->get('/admin/volunteers', '\App\Http\Controllers\admin\VolunteerController@index');
+            Route::middleware('permission:delete_volunteers')->delete('/admin/volunteers/{id}', '\App\Http\Controllers\admin\VolunteerController@destroy');
 
-            // Admin Volunteers — moved inside auth + role gate (was completely public before)
-            Route::get('/admin/volunteers', '\App\Http\Controllers\admin\VolunteerController@index');
-            Route::delete('/admin/volunteers/{id}', '\App\Http\Controllers\admin\VolunteerController@destroy');
+            // Contact Messages
+            Route::middleware('permission:view_contact_messages')->get('/admin/contact-messages', 'AdminController@getContactMessages');
+            Route::middleware('permission:delete_contact_messages')->delete('/admin/contact-messages/{id}', 'AdminController@deleteContactMessage');
 
-            // Contact form submissions inbox
-            Route::get('/admin/contact-messages', 'AdminController@getContactMessages');
-            Route::delete('/admin/contact-messages/{id}', 'AdminController@deleteContactMessage');
-
-            // Site-wide contact info (phone, email, social links)
-            Route::get('/admin/site-settings', 'AdminController@getSiteSettings');
-            Route::put('/admin/site-settings', 'AdminController@updateSiteSettings');
+            // Site Settings
+            Route::middleware('permission:view_site_settings')->get('/admin/site-settings', 'AdminController@getSiteSettings');
+            Route::middleware('permission:edit_site_settings')->put('/admin/site-settings', 'AdminController@updateSiteSettings');
         });
 
         // Restricted routes based on roles
@@ -146,25 +153,58 @@ Route::group(['namespace' => 'Api'], function () {
             Route::post('/admin/accounts', 'AdminController@storeAdmin');
             Route::put('/admin/accounts/{id}', 'AdminController@updateAdmin');
             Route::delete('/admin/accounts/{id}', 'AdminController@deleteAdmin');
+
+            // Permission management routes (president only)
+            Route::get('/admin/permissions', 'PermissionController@index');
+            Route::get('/admin/permissions/modules', 'PermissionController@getPermissionsByModule');
+            Route::get('/admin/users', 'PermissionController@getUsers');
+            Route::get('/admin/users/{id}/permissions', 'PermissionController@getUserPermissions');
+            Route::post('/admin/users/{id}/permissions', 'PermissionController@assignPermissions');
+            Route::delete('/admin/users/{id}/permissions/{permissionId}', 'PermissionController@revokePermission');
         });
 
-        Route::middleware('role:president,secretary,vice_secretary')->group(function () {
-            Route::get('/admin/activity-reports', 'ReportController@getActivities');
-            Route::post('/admin/activity-reports', 'ReportController@storeActivity');
-            Route::put('/admin/activity-reports/{id}', 'ReportController@updateActivity');
-            Route::delete('/admin/activity-reports/{id}', 'ReportController@deleteActivity');
+        // Get current user's permissions (for sidebar rendering)
+        Route::get('/admin/me/permissions', 'PermissionController@getCurrentUserPermissions');
 
+        Route::middleware('permission:view_activity_reports')->group(function () {
+            Route::get('/admin/activity-reports', 'ReportController@getActivities');
+        });
+        Route::middleware('permission:create_activity_reports')->group(function () {
+            Route::post('/admin/activity-reports', 'ReportController@storeActivity');
+        });
+        Route::middleware('permission:edit_activity_reports')->group(function () {
+            Route::put('/admin/activity-reports/{id}', 'ReportController@updateActivity');
+        });
+        Route::middleware('permission:delete_activity_reports')->group(function () {
+            Route::delete('/admin/activity-reports/{id}', 'ReportController@deleteActivity');
+        });
+
+        Route::middleware('permission:view_meetings')->group(function () {
             Route::get('/admin/meetings', 'ReportController@getMeetings');
+        });
+        Route::middleware('permission:create_meetings')->group(function () {
             Route::post('/admin/meetings', 'ReportController@storeMeeting');
+        });
+        Route::middleware('permission:edit_meetings')->group(function () {
+            Route::put('/admin/meetings/{id}', 'ReportController@updateMeeting');
+        });
+        Route::middleware('permission:delete_meetings')->group(function () {
             Route::delete('/admin/meetings/{id}', 'ReportController@deleteMeeting');
         });
 
-        Route::middleware('role:president,treasurer,vice_treasurer')->group(function () {
+        Route::middleware('permission:view_finance')->group(function () {
             Route::get('/admin/finance', 'ReportController@getFinance');
+        });
+        Route::middleware('permission:create_finance')->group(function () {
             Route::post('/admin/finance', 'ReportController@storeTransaction');
+        });
+        Route::middleware('permission:edit_finance')->group(function () {
             Route::put('/admin/finance/{id}', 'ReportController@updateTransaction');
+        });
+        Route::middleware('permission:delete_finance')->group(function () {
             Route::delete('/admin/finance/{id}', 'ReportController@deleteTransaction');
-
+        });
+        Route::middleware('permission:manage_finance_categories')->group(function () {
             Route::get('/admin/finance-categories', 'ReportController@getCategories');
             Route::post('/admin/finance-categories', 'ReportController@storeCategory');
             Route::put('/admin/finance-categories/{id}', 'ReportController@updateCategory');
