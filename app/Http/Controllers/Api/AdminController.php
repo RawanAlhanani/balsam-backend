@@ -918,13 +918,116 @@ public function updateActivity(Request $request, $id)
         return response()->json(\App\LoginAdmin::all());
     }
 
+    // Built-in roles plus president-defined custom roles, for the account form.
+    private function assignableRoleNames() {
+        return array_merge(
+            array_keys(\App\LoginAdmin::BUILT_IN_ROLES),
+            \App\CustomRole::pluck('name')->toArray()
+        );
+    }
+
+    public function getRoles() {
+        $builtIn = [];
+        foreach (\App\LoginAdmin::BUILT_IN_ROLES as $name => $label) {
+            $builtIn[] = ['name' => $name, 'label' => $label, 'custom' => false];
+        }
+        $custom = \App\CustomRole::orderBy('id')->get()->map(function ($role) {
+            return ['id' => $role->id, 'name' => $role->name, 'label' => $role->label, 'custom' => true];
+        })->toArray();
+
+        return response()->json(array_merge($builtIn, $custom));
+    }
+
+    public function storeRole(Request $request) {
+        try {
+            $request->validate([
+                'label' => 'required|string|max:100|unique:custom_roles,label',
+            ], [
+                'label.required' => 'اسم الدور مطلوب.',
+                'label.max' => 'اسم الدور طويل جداً.',
+                'label.unique' => 'هذا الدور موجود بالفعل.',
+            ]);
+
+            $role = \App\CustomRole::create([
+                'name' => 'custom_' . substr(md5(uniqid('', true)), 0, 10),
+                'label' => trim($request->label),
+            ]);
+
+            Log::info('Custom admin role created', [
+                'role_id' => $role->id,
+                'label' => $role->label,
+                'created_by' => auth()->user()->email ?? 'unknown'
+            ]);
+
+            return response()->json(['message' => 'تم إضافة الدور بنجاح', 'role' => $role]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error creating custom role', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء إنشاء الدور.'], 500);
+        }
+    }
+
+    public function updateRole(Request $request, $id) {
+        try {
+            $role = \App\CustomRole::findOrFail($id);
+
+            $request->validate([
+                'label' => 'required|string|max:100|unique:custom_roles,label,' . $role->id,
+            ], [
+                'label.required' => 'اسم الدور مطلوب.',
+                'label.max' => 'اسم الدور طويل جداً.',
+                'label.unique' => 'هذا الدور موجود بالفعل.',
+            ]);
+
+            $role->label = trim($request->label);
+            $role->save();
+
+            return response()->json(['message' => 'تم تحديث الدور بنجاح', 'role' => $role]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'الدور غير موجود.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['message' => 'فشل التحقق من البيانات', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating custom role', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء تحديث الدور.'], 500);
+        }
+    }
+
+    public function deleteRole($id) {
+        try {
+            $role = \App\CustomRole::findOrFail($id);
+
+            if (\App\LoginAdmin::where('role', $role->name)->exists()) {
+                return response()->json([
+                    'message' => 'لا يمكن حذف دور مرتبط بحسابات إدارية. غيّر دور هذه الحسابات أولاً.'
+                ], 422);
+            }
+
+            $role->delete();
+
+            Log::info('Custom admin role deleted', [
+                'role_id' => $id,
+                'label' => $role->label,
+                'deleted_by' => auth()->user()->email ?? 'unknown'
+            ]);
+
+            return response()->json(['message' => 'تم حذف الدور']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'الدور غير موجود.'], 404);
+        } catch (\Exception $e) {
+            Log::error('Error deleting custom role', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'خطأ أثناء حذف الدور.'], 500);
+        }
+    }
+
     public function storeAdmin(Request $request) {
         try {
             $request->validate([
                 "name" => "required|string|max:255",
                 "email" => "required|email|unique:login_admins,email|max:150",
                 "password" => "required|string|min:6|max:100",
-                "role" => "required|in:president,vice_president,secretary,vice_secretary,treasurer,vice_treasurer"
+                "role" => ["required", \Illuminate\Validation\Rule::in($this->assignableRoleNames())]
             ], [
                 'name.required' => 'الاسم مطلوب.',
                 'email.required' => 'البريد الإلكتروني مطلوب.',
@@ -965,7 +1068,7 @@ public function updateActivity(Request $request, $id)
                 "name" => "required|string|max:255",
                 "email" => "required|email|max:150|unique:login_admins,email," . $id,
                 "password" => "nullable|string|min:6|max:100",
-                "role" => "required|in:president,vice_president,secretary,vice_secretary,treasurer,vice_treasurer"
+                "role" => ["required", \Illuminate\Validation\Rule::in($this->assignableRoleNames())]
             ], [
                 'name.required' => 'الاسم مطلوب.',
                 'email.required' => 'البريد الإلكتروني مطلوب.',

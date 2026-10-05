@@ -18,6 +18,13 @@ class CheckRole
     {
         $user = $request->user();
 
+        // `staff` = any admin account regardless of role, including
+        // president-defined custom roles whose access is decided purely by
+        // the per-route `permission:` middleware.
+        if (in_array('staff', $roles) && $user instanceof \App\LoginAdmin) {
+            return $next($request);
+        }
+
         if (!$user || !in_array($user->role, $roles)) {
             return response()->json(['message' => 'غير مسموح لك بالدخول. ليس لديك الصلاحيات الكافية.'], 403);
         }

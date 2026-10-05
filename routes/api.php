@@ -67,7 +67,7 @@ Route::group(['namespace' => 'Api'], function () {
         // Staff-only content management. Requires a LoginAdmin with one of these roles —
         // a self-registered Tuteur (parent/volunteer/admin_request) has no `role` and is
         // rejected by CheckRole regardless of which role is passed here.
-        Route::middleware('role:president,vice_president,secretary,vice_secretary,treasurer,vice_treasurer')->group(function () {
+        Route::middleware('role:staff')->group(function () {
             Route::middleware('permission:view_tuteurs')->get('/admin/tuteurs', 'PublicController@getAdminTuteurs');
             Route::middleware('permission:delete_tuteurs')->delete('/admin/tuteurs/{id}', 'AdminController@deleteTuteur');
             Route::middleware('permission:edit_tuteurs')->get('/admin/tuteur-enfant/{enfantId}', 'AdminController@getTuteurForEdit');
@@ -153,6 +153,12 @@ Route::group(['namespace' => 'Api'], function () {
             Route::post('/admin/accounts', 'AdminController@storeAdmin');
             Route::put('/admin/accounts/{id}', 'AdminController@updateAdmin');
             Route::delete('/admin/accounts/{id}', 'AdminController@deleteAdmin');
+
+            // Custom admin roles (title only; permissions are assigned per account)
+            Route::get('/admin/roles', 'AdminController@getRoles');
+            Route::post('/admin/roles', 'AdminController@storeRole');
+            Route::put('/admin/roles/{id}', 'AdminController@updateRole');
+            Route::delete('/admin/roles/{id}', 'AdminController@deleteRole');
 
             // Permission management routes (president only)
             Route::get('/admin/permissions', 'PermissionController@index');

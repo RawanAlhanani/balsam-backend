@@ -20,6 +20,29 @@ class LoginAdmin extends Authenticatable
         'password',
     ];
 
+    protected $appends = ['role_label'];
+
+    // Roles shipped with the app (slug => Arabic label). Anything else stored in
+    // `role` is a president-defined entry from the custom_roles table.
+    const BUILT_IN_ROLES = [
+        'president' => 'رئيس الجمعية',
+        'vice_president' => 'نائب الرئيس',
+        'secretary' => 'الكاتب العام',
+        'vice_secretary' => 'نائب الكاتب العام',
+        'treasurer' => 'أمين المال',
+        'vice_treasurer' => 'نائب أمين المال',
+    ];
+
+    public function getRoleLabelAttribute()
+    {
+        if (isset(self::BUILT_IN_ROLES[$this->role])) {
+            return self::BUILT_IN_ROLES[$this->role];
+        }
+
+        $custom = \App\CustomRole::where('name', $this->role)->first();
+        return $custom ? $custom->label : $this->role;
+    }
+
     // Relationships
     public function permissions()
     {
