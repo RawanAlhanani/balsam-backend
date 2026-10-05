@@ -31,6 +31,7 @@ class PermissionController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'role_label' => $user->role_label,
             ],
             'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
         ]);
@@ -68,6 +69,7 @@ class PermissionController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'role_label' => $user->role_label,
                 'permissions' => $user->getAllPermissions(),
                 'direct_permissions' => $user->permissions,
                 'revoked_permissions' => $user->revokedPermissions,
@@ -96,6 +98,7 @@ class PermissionController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'role_label' => $user->role_label,
             ],
             'permissions' => $user->getAllPermissions(),
             'direct_permissions' => $user->permissions,
