@@ -269,18 +269,22 @@ public function updateActivity(Request $request, $id)
         try {
             $request->validate([
                 "titre" => "required|string|max:255",
-                "description" => "required|string|min:10",
+                "description" => "required|string|min:10|max:10000",
                 "image_info" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
             ], [
                 'titre.required' => 'عنوان الخبر مطلوب.',
                 'description.required' => 'محتوى الخبر مطلوب.',
                 'description.min' => 'يجب أن يكون المحتوى 10 أحرف على الأقل.',
+                'description.max' => 'محتوى الخبر طويل جداً (الحد الأقصى 10000 حرف).',
                 'image_info.image' => 'يجب أن يكون الملف صورة.',
                 'image_info.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
                 'image_info.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
             ]);
 
-            $info = new Info($request->all());
+            $info = new Info($request->only(['titre', 'description']));
+            // image_info is NOT NULL; the image is optional, so an empty
+            // string means "no image" (the frontend falls back to a placeholder).
+            $info->image_info = '';
             if ($request->hasFile('image_info')) {
                 $image = $request->file('image_info');
                 $name = \Illuminate\Support\Str::uuid() . '.' . $image->extension();
@@ -312,12 +316,13 @@ public function updateActivity(Request $request, $id)
         try {
             $request->validate([
                 "titre" => "required|string|max:255",
-                "description" => "required|string|min:10",
+                "description" => "required|string|min:10|max:10000",
                 "image_info" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
             ], [
                 'titre.required' => 'عنوان الخبر مطلوب.',
                 'description.required' => 'محتوى الخبر مطلوب.',
                 'description.min' => 'يجب أن يكون المحتوى 10 أحرف على الأقل.',
+                'description.max' => 'محتوى الخبر طويل جداً (الحد الأقصى 10000 حرف).',
                 'image_info.image' => 'يجب أن يكون الملف صورة.',
                 'image_info.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
                 'image_info.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
