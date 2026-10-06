@@ -82,7 +82,7 @@ public function updateActivity(Request $request, $id)
                 "titre" => "required|string|max:255",
                 "type_activite_id" => "required|exists:type_activites,id",
                 "date_activite" => "required|date",
-                "description" => "required|string|min:10",
+                "description" => "required|string|min:10|max:10000",
                 "image_activite" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
             ], [
                 'titre.required' => 'عنوان النشاط مطلوب.',
@@ -92,6 +92,7 @@ public function updateActivity(Request $request, $id)
                 'date_activite.date' => 'تنسيق التاريخ غير صحيح.',
                 'description.required' => 'وصف النشاط مطلوب.',
                 'description.min' => 'يجب أن يكون الوصف 10 أحرف على الأقل.',
+                'description.max' => 'وصف النشاط طويل جداً (الحد الأقصى 10000 حرف).',
                 'image_activite.image' => 'يجب أن يكون الملف صورة.',
                 'image_activite.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
                 'image_activite.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
@@ -170,8 +171,8 @@ public function updateActivity(Request $request, $id)
             $request->validate([
                 "titre" => "required|string|max:255",
                 "type_activite_id" => "required|exists:type_activites,id",
-                "date_activite" => "required|date|after:today",
-                "description" => "required|string|min:10",
+                "date_activite" => "required|date",
+                "description" => "required|string|min:10|max:10000",
                 "image_activite" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
             ], [
                 'titre.required' => 'عنوان النشاط مطلوب.',
@@ -179,9 +180,9 @@ public function updateActivity(Request $request, $id)
                 'type_activite_id.exists' => 'نوع النشاط المختار غير صالح.',
                 'date_activite.required' => 'تاريخ النشاط مطلوب.',
                 'date_activite.date' => 'تنسيق التاريخ غير صحيح.',
-                'date_activite.after' => 'يجب أن يكون تاريخ النشاط بعد اليوم.',
                 'description.required' => 'وصف النشاط مطلوب.',
                 'description.min' => 'يجب أن يكون الوصف 10 أحرف على الأقل.',
+                'description.max' => 'وصف النشاط طويل جداً (الحد الأقصى 10000 حرف).',
                 'image_activite.image' => 'يجب أن يكون الملف صورة.',
                 'image_activite.mimes' => 'تنسيقات الصور المدعومة هي: jpeg, png, jpg, gif, svg.',
                 'image_activite.max' => 'حجم الصورة يجب أن لا يتجاوز 2 ميجابايت.',
@@ -192,6 +193,10 @@ public function updateActivity(Request $request, $id)
                 'description' => $request->description,
                 'type_activite_id' => $request->type_activite_id,
                 'date_activite' => $request->date_activite,
+                // NOT NULL columns without a DB default: the image is optional
+                // ('' = no image, placeholder shown) and ajoutAuxInfos is a legacy flag.
+                'image_activite' => '',
+                'ajoutAuxInfos' => 0,
             ]);
 
             if ($request->hasFile('image_activite')) {
@@ -763,7 +768,7 @@ public function updateActivity(Request $request, $id)
             $request->validate([
                 "type" => "required|in:about,autism,projects",
                 "titre" => "required|string|max:255",
-                "description" => "nullable|string",
+                "description" => "nullable|string|max:10000",
                 "description_json" => "nullable|json",
                 "image" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
             ], [
@@ -823,7 +828,7 @@ public function updateActivity(Request $request, $id)
             $request->validate([
                 "type" => "required|in:about,autism,projects",
                 "titre" => "required|string|max:255",
-                "description" => "nullable|string",
+                "description" => "nullable|string|max:10000",
                 "description_json" => "nullable|json",
                 "image" => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048"
             ], [
