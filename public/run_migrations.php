@@ -2,7 +2,7 @@
 // One-time migration runner script. Runs pending Laravel migrations
 // and deletes itself automatically after completion.
 
-$TOKEN = 'ad3752e59e3a366da2423a7e60f498c8dacf738fc6a6109c';
+$TOKEN = 'ffde0273ea2e661edb8e59d217c7d0afc7150f18f58f2bf4';
 
 if (!isset($_GET['token']) || !hash_equals($TOKEN, (string) $_GET['token'])) {
     http_response_code(403);
