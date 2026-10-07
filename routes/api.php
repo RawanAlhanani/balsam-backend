@@ -62,6 +62,13 @@ Route::group(['namespace' => 'Api'], function () {
     Route::get('/team', 'PublicController@getTeam');
     Route::get('/site-settings', 'PublicController@getSiteSettings');
 
+    // Link previews (Open Graph) for social crawlers; the frontend .htaccess sends them here.
+    Route::middleware('throttle:120,1')->group(function () {
+        Route::get('/share/default/image.jpg', 'ShareController@defaultImage');
+        Route::get('/share/{type}/{id}', 'ShareController@page')->where(['type' => 'news|activity|project|autism', 'id' => '[0-9]+']);
+        Route::get('/share/{type}/{id}/image.jpg', 'ShareController@image')->where(['type' => 'news|activity|project|autism', 'id' => '[0-9]+']);
+    });
+
     // Admin routes
     Route::middleware('auth:sanctum')->group(function () {
         // Staff-only content management. Requires a LoginAdmin with one of these roles —
